@@ -9,4 +9,6 @@ interface AuthRepository {
     suspend fun logout(): Result<Unit>
     fun getAuthToken(): Flow<String?>
     suspend fun saveAuthToken(token: String)
+    suspend fun forgotPassword(email: String): Result<Pair<String, String?>>
+    suspend fun resetPassword(token: String, newPassword: String): Result<String>
 }

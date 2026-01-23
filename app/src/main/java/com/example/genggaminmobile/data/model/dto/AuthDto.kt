@@ -23,3 +23,18 @@ data class UserDto(
     @SerializedName("isActive") val isActive: Boolean,
     @SerializedName("roles") val roles: List<String>
 )
+
+data class ForgotPasswordRequest(
+    @SerializedName("email") val email: String
+)
+
+data class ForgotPasswordResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("token") val token: String?
+)
+
+data class ResetPasswordRequest(
+    @SerializedName("token") val token: String,
+    @SerializedName("newPassword") val newPassword: String
+)

@@ -3,6 +3,8 @@ package com.example.genggaminmobile.data.repository
 import com.example.genggaminmobile.data.local.dao.UserDao
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.local.entity.UserEntity
+import com.example.genggaminmobile.data.model.dto.ForgotPasswordRequest
+import com.example.genggaminmobile.data.model.dto.ResetPasswordRequest
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
@@ -87,5 +89,29 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun saveAuthToken(token: String) {
         preferencesManager.saveAuthToken(token)
+    }
+
+    override suspend fun forgotPassword(email: String): Result<Pair<String, String?>> {
+        return try {
+            val response = authApi.forgotPassword(ForgotPasswordRequest(email))
+            Result.success(Pair(response.message, response.token))
+        } catch (e: HttpException) {
+            val message = e.response()?.errorBody()?.string() ?: e.message()
+            Result.failure(Exception(message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun resetPassword(token: String, newPassword: String): Result<String> {
+        return try {
+            val response = authApi.resetPassword(ResetPasswordRequest(token, newPassword))
+            Result.success(response.message)
+        } catch (e: HttpException) {
+            val message = e.response()?.errorBody()?.string() ?: e.message()
+            Result.failure(Exception(message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
