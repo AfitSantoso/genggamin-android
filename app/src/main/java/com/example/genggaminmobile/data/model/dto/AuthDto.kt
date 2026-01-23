@@ -1,0 +1,25 @@
+package com.example.genggaminmobile.data.model.dto
+
+import com.google.gson.annotations.SerializedName
+
+data class LoginResponse(
+    @SerializedName("id") val id: Int,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("isActive") val isActive: Boolean,
+    @SerializedName("token") val token: String
+)
+
+data class RegisterResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("id") val id: Int
+)
+
+data class UserDto(
+    @SerializedName("id") val id: Int,
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("fullName") val fullName: String?,
+    @SerializedName("isActive") val isActive: Boolean,
+    @SerializedName("roles") val roles: List<String>
+)

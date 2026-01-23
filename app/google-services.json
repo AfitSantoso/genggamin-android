@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "926562784828",
+    "project_id": "genggaminmobile",
+    "storage_bucket": "genggaminmobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:926562784828:android:0a94b617e767a292bcd539",
+        "android_client_info": {
+          "package_name": "com.example.genggaminmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwE8EXaBo7MjU82LcgO9r6nHlBy4S6ZEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
