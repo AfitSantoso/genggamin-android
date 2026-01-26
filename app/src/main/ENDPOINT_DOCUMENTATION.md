@@ -5,7 +5,7 @@ Dokumentasi lengkap semua endpoint yang tersedia dalam aplikasi Genggamin untuk 
 **Base URL**: `http://localhost:8080` (development)
 
 **Format Response Standar**:
-Sebagian besar endpoint menggunakan wrapper `ApiResponse<T>`:
+Endpoint menggunakan wrapper `ApiResponse<T>`:
 
 ```json
 {
@@ -50,11 +50,15 @@ Controller untuk menangani autentikasi dan otorisasi user.
 
 ```json
 {
-  "id": 1,
-  "username": "johndoe",
-  "email": "john@example.com",
-  "isActive": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "id": 1,
+    "username": "johndoe",
+    "email": "john@example.com",
+    "isActive": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
 }
 ```
 
@@ -62,7 +66,9 @@ Controller untuk menangani autentikasi dan otorisasi user.
 
 ```json
 {
-  "message": "Invalid credentials"
+  "success": false,
+  "message": "Invalid credentials",
+  "data": null
 }
 ```
 
@@ -92,8 +98,11 @@ Controller untuk menangani autentikasi dan otorisasi user.
 
 ```json
 {
+  "success": true,
   "message": "User created",
-  "id": 1
+  "data": {
+    "id": 1
+  }
 }
 ```
 
@@ -101,7 +110,9 @@ Controller untuk menangani autentikasi dan otorisasi user.
 
 ```json
 {
-  "message": "Username already exists"
+  "success": false,
+  "message": "Username already exists",
+  "data": null
 }
 ```
 
@@ -125,7 +136,8 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": true,
-  "message": "Logout successful. Token has been invalidated."
+  "message": "Logout successful. Token has been invalidated.",
+  "data": null
 }
 ```
 
@@ -134,7 +146,8 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": false,
-  "message": "Authorization header is missing or invalid"
+  "message": "Authorization header is missing or invalid",
+  "data": null
 }
 ```
 
@@ -161,7 +174,10 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": true,
-  "message": "Link reset password telah dikirim ke email Anda. Silakan cek inbox atau spam folder."
+  "message": "Link reset password telah dikirim ke email Anda. Silakan cek inbox atau spam folder.",
+  "data": {
+    "token": "reset-token-example"
+  }
 }
 ```
 
@@ -170,7 +186,8 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": false,
-  "message": "Email not found"
+  "message": "Email not found",
+  "data": null
 }
 ```
 
@@ -198,7 +215,8 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": true,
-  "message": "Password berhasil direset. Silakan login dengan password baru Anda."
+  "message": "Password berhasil direset. Silakan login dengan password baru Anda.",
+  "data": null
 }
 ```
 
@@ -207,7 +225,8 @@ Controller untuk menangani autentikasi dan otorisasi user.
 ```json
 {
   "success": false,
-  "message": "Invalid or expired token"
+  "message": "Invalid or expired token",
+  "data": null
 }
 ```
 
@@ -486,33 +505,37 @@ Controller untuk mengelola role/permissions.
 **Success Response (200 OK)**:
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "CUSTOMER",
-    "description": "Customer role for loan applications"
-  },
-  {
-    "id": 2,
-    "name": "MARKETING",
-    "description": "Marketing role for reviewing loans"
-  },
-  {
-    "id": 3,
-    "name": "BRANCH_MANAGER",
-    "description": "Branch Manager role for approving loans"
-  },
-  {
-    "id": 4,
-    "name": "BACK_OFFICE",
-    "description": "Back Office role for disbursing loans"
-  },
-  {
-    "id": 5,
-    "name": "ADMIN",
-    "description": "Administrator with full access"
-  }
-]
+{
+  "success": true,
+  "message": "Roles retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "name": "CUSTOMER",
+      "description": "Customer role for loan applications"
+    },
+    {
+      "id": 2,
+      "name": "MARKETING",
+      "description": "Marketing role for reviewing loans"
+    },
+    {
+      "id": 3,
+      "name": "BRANCH_MANAGER",
+      "description": "Branch Manager role for approving loans"
+    },
+    {
+      "id": 4,
+      "name": "BACK_OFFICE",
+      "description": "Back Office role for disbursing loans"
+    },
+    {
+      "id": 5,
+      "name": "ADMIN",
+      "description": "Administrator with full access"
+    }
+  ]
+}
 ```
 
 **Fungsi**: Retrieve semua role dari database untuk keperluan assignment atau dropdown selection.
@@ -539,9 +562,13 @@ Controller untuk mengelola role/permissions.
 
 ```json
 {
-  "id": 6,
-  "name": "SUPERVISOR",
-  "description": "Supervisor role"
+  "success": true,
+  "message": "Role created successfully",
+  "data": {
+    "id": 6,
+    "name": "SUPERVISOR",
+    "description": "Supervisor role"
+  }
 }
 ```
 
@@ -549,7 +576,9 @@ Controller untuk mengelola role/permissions.
 
 ```json
 {
-  "message": "Role name already exists"
+  "success": false,
+  "message": "Role name already exists",
+  "data": null
 }
 ```
 
@@ -933,6 +962,36 @@ Controller untuk mengelola pengajuan dan proses approval pinjaman dengan workflo
 ```
 
 **Fungsi**: Customer mengajukan pinjaman, validasi kelengkapan data customer dan plafond yang dipilih. Interest rate diambil otomatis dari plafond.
+
+---
+
+### 5.1.a GET `/loans/my-limits`
+
+**Deskripsi**: Mendapatkan informasi limit pinjaman customer (total dan sisa limit per plafond)
+**URL**: `GET /loans/my-limits`
+**Akses**: Role CUSTOMER atau ADMIN
+**Header**: `Authorization: Bearer <token>`
+
+**Success Response (200 OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Limits retrieved successfully",
+  "data": [
+    {
+      "id": 1,
+      "plafondId": 1,
+      "plafondTitle": "Pinjaman Personal",
+      "totalLimit": 50000000,
+      "availableLimit": 45000000,
+      "isLocked": false
+    }
+  ]
+}
+```
+
+**Fungsi**: Customer dapat melihat berapa limit yang mereka miliki untuk setiap jenis plafond, serta sisa limit yang masih bisa digunakan.
 
 ---
 
@@ -1840,6 +1899,62 @@ Controller untuk mengelola master data plafond pinjaman (limit kredit berdasarka
 
 ---
 
+### 6.4.a GET `/plafonds/simulate`
+
+**Deskripsi**: Menghitung simulasi cicilan pinjaman (GET method)
+**URL**: `GET /plafonds/simulate`
+**Akses**: Public
+**Query Params**:
+- `amount` (BigDecimal, required): Jumlah pinjaman
+- `tenor` (Long, required): Jangka waktu dalam bulan
+- `plafondId` (Long, optional): ID plafond spesifik (untuk rate spesifik)
+
+**Example**: `/plafonds/simulate?amount=10000000&tenor=12`
+
+**Success Response (200 OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Loan simulation successful",
+  "data": {
+    "loanAmount": 10000000,
+    "tenorMonth": 12,
+    "interestRate": 0.83, // Monthly rate
+    "monthlyInstallment": 916333,
+    "totalInterest": 996000,
+    "totalPayment": 10996000,
+    "plafondId": 1
+  }
+}
+```
+
+**Fungsi**: Melakukan simulasi perhitungan cicilan tanpa harus login.
+
+---
+
+### 6.4.b POST `/plafonds/simulate`
+
+**Deskripsi**: Menghitung simulasi cicilan pinjaman (POST method)
+**URL**: `POST /plafonds/simulate`
+**Akses**: Public
+
+**Request Body**:
+
+```json
+{
+  "amount": 10000000,
+  "tenor": 12,
+  "plafondId": 1 // Optional
+}
+```
+
+**Success Response**: Sama dengan GET `/plafonds/simulate`
+
+**Fungsi**: Alternatif simulasi menggunakan POST body.
+
+---
+
 ### 6.5 POST `/plafonds`
 
 **Deskripsi**: Membuat plafond baru  
@@ -2263,6 +2378,59 @@ Controller untuk mengelola notifikasi user.
 
 ---
 
+## 8. General / Health Check
+
+Controller untuk pengecekan status aplikasi.
+
+**File Terkait:**
+
+- **Controller**: `controller/HealthController.java`
+
+### 8.1 GET `/`
+
+**Deskripsi**: Root endpoint untuk informasi aplikasi
+**URL**: `GET /`
+**Akses**: Public
+
+**Success Response (200 OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Application info retrieved successfully",
+  "data": {
+    "application": "Genggamin API",
+    "status": "running",
+    "timestamp": "2026-01-25T18:00:00",
+    "message": "Welcome to Genggamin Loan Management API",
+    "documentation": "/swagger-ui.html"
+  }
+}
+```
+
+---
+
+### 8.2 GET `/health`
+
+**Deskripsi**: Health check endpoint untuk monitoring
+**URL**: `GET /health` atau `GET /api/health`
+**Akses**: Public
+
+**Success Response (200 OK)**:
+
+```json
+{
+  "success": true,
+  "message": "Application is healthy",
+  "data": {
+    "status": "UP",
+    "timestamp": "2026-01-25T18:00:00"
+  }
+}
+```
+
+---
+
 ## Workflow Proses Loan
 
 Berikut adalah alur lengkap proses pengajuan pinjaman dari awal hingga pencairan:
@@ -2308,25 +2476,25 @@ Berikut adalah alur lengkap proses pengajuan pinjaman dari awal hingga pencairan
 ## Roles dalam Sistem
 
 1. **CUSTOMER**: Mengajukan pinjaman dan melihat status pinjaman mereka
-   - POST /loans/submit
-   - GET /loans/my-loans
+    - POST /loans/submit
+    - GET /loans/my-loans
 2. **MARKETING**: Review pengajuan pinjaman customer
-   - GET /loans/review
-   - POST /loans/review/{loanId}
-   - GET /loans/reviewed
+    - GET /loans/review
+    - POST /loans/review/{loanId}
+    - GET /loans/reviewed
 3. **BRANCH_MANAGER**: Approve/reject pinjaman yang sudah direview
-   - GET /loans/approve
-   - POST /loans/approve/{loanId}
-   - GET /loans/approved
+    - GET /loans/approve
+    - POST /loans/approve/{loanId}
+    - GET /loans/approved
 4. **BACK_OFFICE**: Mencairkan dana pinjaman yang sudah diapprove
-   - GET /loans/disburse
-   - POST /loans/disburse/{loanId}
-   - GET /loans/disbursed
+    - GET /loans/disburse
+    - POST /loans/disburse/{loanId}
+    - GET /loans/disbursed
 5. **ADMIN**: Akses penuh ke semua endpoint, manage master data
-   - Semua endpoint di atas
-   - GET /loans/all
-   - POST /plafonds, PUT /plafonds/{id}, DELETE /plafonds/{id}
-   - PATCH /plafonds/{id}/toggle-status, PATCH /plafonds/{id}/restore
+    - Semua endpoint di atas
+    - GET /loans/all
+    - POST /plafonds, PUT /plafonds/{id}, DELETE /plafonds/{id}
+    - PATCH /plafonds/{id}/toggle-status, PATCH /plafonds/{id}/restore
 
 ---
 

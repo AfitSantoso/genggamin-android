@@ -35,7 +35,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.10.13.81:8080") // Standard Android Emulator localhost
+            .baseUrl("http://10.10.13.97:8080") // Standard Android Emulator localhost
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient)
             .build()

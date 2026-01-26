@@ -3,12 +3,16 @@ package com.example.genggaminmobile.core.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.example.genggaminmobile.ui.features.home.HomeScreen
 import com.example.genggaminmobile.ui.features.auth.forgot_password.ForgotPasswordScreen
 import com.example.genggaminmobile.ui.features.auth.login.LoginScreen
 import com.example.genggaminmobile.ui.features.auth.register.RegisterScreen
+import com.example.genggaminmobile.ui.features.auth.reset_password.ResetPasswordScreen
 
 @Composable
 fun NavGraph(
@@ -60,6 +64,30 @@ fun NavGraph(
             ForgotPasswordScreen(
                 onBack = {
                     navController.popBackStack()
+                },
+                onNavigateToResetPassword = { token ->
+                    navController.navigate(Screen.ResetPassword.createRoute(token))
+                }
+            )
+        }
+        composable(
+            route = Screen.ResetPassword.route,
+            arguments = listOf(
+                navArgument("token") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "genggamin://reset-password?token={token}" },
+                navDeepLink { uriPattern = "https://genggamin.com/reset-password?token={token}" }
+            )
+        ) {
+            ResetPasswordScreen(
+                onResetSuccess = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.ResetPassword.route) { inclusive = true }
+                    }
                 }
             )
         }

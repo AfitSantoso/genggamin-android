@@ -48,8 +48,9 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Menggunakan resource yang didukung oleh painterResource (Bitmap/Raster)
             Image(
-                painter = painterResource(id = R.mipmap.genggamin),
+                painter = painterResource(id = R.drawable.genggamin),
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp)

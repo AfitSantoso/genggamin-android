@@ -27,6 +27,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Deep Link for Reset Password -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="genggamin" android:host="reset-password" />
+                <!-- Juga dukung HTTP/HTTPS jika link dari email menggunakan domain -->
+                <data android:scheme="http" android:host="genggamin.com" android:pathPrefix="/reset-password" />
+                <data android:scheme="https" android:host="genggamin.com" android:pathPrefix="/reset-password" />
+            </intent-filter>
         </activity>
 
         <service

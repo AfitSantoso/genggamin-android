@@ -3,12 +3,14 @@ package com.example.genggaminmobile.ui.features.auth.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.genggaminmobile.domain.usecase.auth.LoginUseCase
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,13 +34,24 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             
-            loginUseCase(currentState.username, currentState.password)
-                .onSuccess {
-                    _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+            try {
+                // Mendapatkan FCM Token terbaru sebelum login
+                val fcmToken = try {
+                    FirebaseMessaging.getInstance().token.await()
+                } catch (e: Exception) {
+                    null
                 }
-                .onFailure { error ->
-                    _uiState.update { it.copy(isLoading = false, error = error.message ?: "Terjadi kesalahan") }
-                }
+
+                loginUseCase(currentState.username, currentState.password, fcmToken)
+                    .onSuccess {
+                        _uiState.update { it.copy(isLoading = false, isLoginSuccess = true) }
+                    }
+                    .onFailure { error ->
+                        _uiState.update { it.copy(isLoading = false, error = error.message ?: "Terjadi kesalahan") }
+                    }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Terjadi kesalahan") }
+            }
         }
     }
 }
