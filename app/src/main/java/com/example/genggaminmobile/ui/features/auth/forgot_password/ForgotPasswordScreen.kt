@@ -33,7 +33,7 @@ fun ForgotPasswordScreen(
 
     LaunchedEffect(uiState.token) {
         uiState.token?.let { token ->
-            Toast.makeText(context, uiState.successMessage ?: "Link reset password telah dikirim", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, uiState.successMessage ?: "Link reset kata sandi telah dikirim", Toast.LENGTH_LONG).show()
             onNavigateToResetPassword(token)
             viewModel.resetState()
         }
@@ -48,7 +48,7 @@ fun ForgotPasswordScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lupa Password", style = MaterialTheme.typography.titleMedium) },
+                title = { Text("Lupa Kata Sandi", style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
@@ -67,7 +67,7 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
-                text = "Atur Ulang Password",
+                text = "Atur Ulang Kata Sandi",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
