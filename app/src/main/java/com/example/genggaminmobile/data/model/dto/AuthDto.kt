@@ -2,6 +2,12 @@ package com.example.genggaminmobile.data.model.dto
 
 import com.google.gson.annotations.SerializedName
 
+data class LoginRequest(
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("fcmToken") val fcmToken: String? = null
+)
+
 data class LoginResponse(
     @SerializedName("id") val id: Int,
     @SerializedName("username") val username: String,
@@ -10,8 +16,15 @@ data class LoginResponse(
     @SerializedName("token") val token: String
 )
 
+data class RegisterRequest(
+    @SerializedName("username") val username: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("fullName") val fullName: String,
+    @SerializedName("roles") val roles: List<String>? = null
+)
+
 data class RegisterResponse(
-    @SerializedName("message") val message: String,
     @SerializedName("id") val id: Int
 )
 
@@ -29,8 +42,6 @@ data class ForgotPasswordRequest(
 )
 
 data class ForgotPasswordResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
     @SerializedName("token") val token: String?
 )
 

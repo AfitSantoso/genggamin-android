@@ -3,8 +3,7 @@ package com.example.genggaminmobile.data.repository
 import com.example.genggaminmobile.data.local.dao.UserDao
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.local.entity.UserEntity
-import com.example.genggaminmobile.data.model.dto.ForgotPasswordRequest
-import com.example.genggaminmobile.data.model.dto.ResetPasswordRequest
+import com.example.genggaminmobile.data.model.dto.*
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
@@ -20,31 +19,32 @@ class AuthRepositoryImpl @Inject constructor(
     private val preferencesManager: PreferencesManager
 ) : AuthRepository {
 
-    override suspend fun login(username: String, password: String): Result<User> {
+    override suspend fun login(username: String, password: String, fcmToken: String?): Result<User> {
         return try {
-            val response = authApi.login(mapOf("username" to username, "password" to password))
+            val response = authApi.login(LoginRequest(username, password, fcmToken))
+            val loginData = response.data ?: throw Exception("Data response kosong")
             
             // Offline First: Save to local database
             userDao.insertUser(
                 UserEntity(
-                    id = response.id,
-                    username = response.username,
-                    email = response.email,
+                    id = loginData.id,
+                    username = loginData.username,
+                    email = loginData.email,
                     fullName = null,
-                    isActive = response.isActive
+                    isActive = loginData.isActive
                 )
             )
             
-            saveAuthToken(response.token)
+            saveAuthToken(loginData.token)
             
             Result.success(User(
-                id = response.id,
-                username = response.username,
-                email = response.email,
+                id = loginData.id,
+                username = loginData.username,
+                email = loginData.email,
                 fullName = null,
-                isActive = response.isActive,
+                isActive = loginData.isActive,
                 roles = emptyList(),
-                token = response.token
+                token = loginData.token
             ))
         } catch (e: HttpException) {
             val errorMessage = when (e.code()) {
@@ -54,20 +54,13 @@ class AuthRepositoryImpl @Inject constructor(
             }
             Result.failure(Exception(errorMessage))
         } catch (e: Exception) {
-            Result.failure(Exception("Gagal terhubung ke server. Periksa koneksi internet Anda."))
+            Result.failure(Exception(e.message ?: "Gagal terhubung ke server. Periksa koneksi internet Anda."))
         }
     }
 
     override suspend fun register(username: String, email: String, password: String, fullName: String): Result<Unit> {
         return try {
-            authApi.register(
-                mapOf(
-                    "username" to username,
-                    "email" to email,
-                    "password" to password,
-                    "fullName" to fullName
-                )
-            )
+            authApi.register(RegisterRequest(username, password, email, fullName))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -94,7 +87,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun forgotPassword(email: String): Result<Pair<String, String?>> {
         return try {
             val response = authApi.forgotPassword(ForgotPasswordRequest(email))
-            Result.success(Pair(response.message, response.token))
+            Result.success(Pair(response.message, response.data?.token))
         } catch (e: HttpException) {
             val message = e.response()?.errorBody()?.string() ?: e.message()
             Result.failure(Exception(message))

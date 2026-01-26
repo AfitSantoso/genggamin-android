@@ -7,10 +7,10 @@ import javax.inject.Inject
 class LoginUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
-    suspend operator fun invoke(username: String, password: String): Result<User> {
+    suspend operator fun invoke(username: String, password: String, fcmToken: String?): Result<User> {
         if (username.isBlank() || password.isBlank()) {
             return Result.failure(Exception("Username and password cannot be empty"))
         }
-        return repository.login(username, password)
+        return repository.login(username, password, fcmToken)
     }
 }
