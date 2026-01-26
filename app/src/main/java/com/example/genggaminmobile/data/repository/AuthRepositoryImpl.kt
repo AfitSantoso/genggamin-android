@@ -4,6 +4,8 @@ import com.example.genggaminmobile.data.local.dao.UserDao
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.local.entity.UserEntity
 import com.example.genggaminmobile.data.model.dto.*
+import com.google.gson.Gson
+import com.example.genggaminmobile.core.network.ApiResponse
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
@@ -60,10 +62,28 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun register(username: String, email: String, password: String, fullName: String): Result<Unit> {
         return try {
-            authApi.register(RegisterRequest(username, password, email, fullName))
+            // Otomatisasi roles sebagai CUSTOMER sesuai permintaan
+            val request = RegisterRequest(
+                username = username,
+                password = password,
+                email = email,
+                fullName = fullName,
+                roles = listOf("CUSTOMER")
+            )
+            authApi.register(request)
             Result.success(Unit)
+        } catch (e: HttpException) {
+            // Mengambil error body dari backend: {"success":false, "message":"Email sudah ada", ...}
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = try {
+                val apiResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+                apiResponse.message
+            } catch (ex: Exception) {
+                "Terjadi kesalahan server (${e.code()})"
+            }
+            Result.failure(Exception(errorMessage))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(e.message ?: "Gagal terhubung ke server"))
         }
     }
 
