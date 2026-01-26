@@ -31,12 +31,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    
+    // Cara terbaru untuk setting JVM Target di Kotlin 2.0+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
+
     buildFeatures {
         compose = true
     }
@@ -79,6 +84,11 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // Google Sign-In (Credential Manager)
+    implementation(libs.androidx.credentials.core)
+    implementation(libs.androidx.credentials.play)
+    implementation(libs.google.id)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

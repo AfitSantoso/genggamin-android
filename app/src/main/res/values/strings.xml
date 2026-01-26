@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">genggaminmobile</string>
+    <string name="app_name">Genggamin Mobile</string>
+    <string name="default_web_client_id" translatable="false">196871791222-f0thn7i0sblkes63jrj3l3m6lbfq4g0b.apps.googleusercontent.com</string>
 </resources>

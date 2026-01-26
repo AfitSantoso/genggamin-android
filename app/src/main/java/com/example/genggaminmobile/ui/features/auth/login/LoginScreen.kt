@@ -1,5 +1,6 @@
 package com.example.genggaminmobile.ui.features.auth.login
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,15 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.R
 import com.example.genggaminmobile.ui.components.inputs.CustomTextField
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -30,9 +39,16 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val credentialManager = remember { CredentialManager.create(context) }
+    
+    // Web Client ID Terbaru (Web Application)
+    val webClientId = "196871791222-5opu1hhd733juuvokltoq6jr3lidppia.apps.googleusercontent.com"
 
     LaunchedEffect(uiState.isLoginSuccess) {
         if (uiState.isLoginSuccess) {
+            Log.d("LoginScreen", "Login sukses, menavigasi ke Home")
             onLoginSuccess()
         }
     }
@@ -48,7 +64,6 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Menggunakan resource yang didukung oleh painterResource (Bitmap/Raster)
             Image(
                 painter = painterResource(id = R.drawable.genggamin),
                 contentDescription = null,
@@ -76,8 +91,8 @@ fun LoginScreen(
                 onValueChange = viewModel::onUsernameChange,
                 label = "Nama pengguna",
                 modifier = Modifier.fillMaxWidth(),
-                isError = uiState.error == "Pengguna tidak ditemukan",
-                errorMessage = if (uiState.error == "Pengguna tidak ditemukan") uiState.error else null
+                isError = uiState.error?.contains("Pengguna", ignoreCase = true) == true,
+                errorMessage = if (uiState.error?.contains("Pengguna", ignoreCase = true) == true) uiState.error else null
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -89,12 +104,11 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                isError = uiState.error == "kata sandi salah",
-                errorMessage = if (uiState.error == "Kata sandi salah") uiState.error else null
+                isError = uiState.error?.contains("sandi", ignoreCase = true) == true,
+                errorMessage = if (uiState.error?.contains("sandi", ignoreCase = true) == true) uiState.error else null
             )
 
-            // General error message if not field specific
-            if (uiState.error != null && uiState.error != "Pengguna tidak ditemukan" && uiState.error != "Kata sandi salah") {
+            if (uiState.error != null && uiState.error?.contains("sandi", ignoreCase = true) == false && uiState.error?.contains("Pengguna", ignoreCase = true) == false) {
                 Text(
                     text = uiState.error ?: "",
                     color = MaterialTheme.colorScheme.error,
@@ -127,6 +141,66 @@ fun LoginScreen(
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
                     Text("Masuk", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            OutlinedButton(
+                onClick = {
+                    scope.launch {
+                        try {
+                            Log.d("LoginScreen", "Memulai proses Google Login...")
+                            val googleIdOption = GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId(webClientId)
+                                .setAutoSelectEnabled(false)
+                                .build()
+
+                            val request = GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+
+                            val result = credentialManager.getCredential(
+                                context = context,
+                                request = request
+                            )
+
+                            val credential = result.credential
+                            if (credential is GoogleIdTokenCredential) {
+                                Log.d("LoginScreen", "Google ID Token didapat, mengirim ke ViewModel")
+                                viewModel.loginWithGoogle(credential.idToken)
+                            } else {
+                                Log.e("LoginScreen", "Tipe kredensial tidak dikenal: ${credential.type}")
+                                viewModel.setErrorMessage("Gagal mendapatkan data Google")
+                            }
+                        } catch (e: GetCredentialCancellationException) {
+                            Log.d("LoginScreen", "Login dibatalkan oleh pengguna")
+                            viewModel.setErrorMessage(null)
+                        } catch (e: Exception) {
+                            Log.e("LoginScreen", "Error saat Google Login: ${e.message}", e)
+                            viewModel.setErrorMessage("Gagal login Google: ${e.message}")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = !uiState.isLoading
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.google),
+                        contentDescription = "Google Logo",
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Unspecified
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        "Masuk dengan Google",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                    )
                 }
             }
 
