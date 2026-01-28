@@ -9,6 +9,9 @@ interface AuthApi {
     @POST("/auth/login")
     suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
 
+    @POST("/auth/google")
+    suspend fun loginGoogle(@Body request: GoogleLoginRequest): ApiResponse<LoginResponse>
+
     @POST("/auth/register")
     suspend fun register(@Body request: RegisterRequest): ApiResponse<RegisterResponse>
 

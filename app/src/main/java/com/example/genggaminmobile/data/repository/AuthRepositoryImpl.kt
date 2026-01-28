@@ -18,36 +18,14 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val userDao: UserDao,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val gson: Gson
 ) : AuthRepository {
 
     override suspend fun login(username: String, password: String, fcmToken: String?): Result<User> {
         return try {
             val response = authApi.login(LoginRequest(username, password, fcmToken))
-            val loginData = response.data ?: throw Exception("Data response kosong")
-            
-            // Offline First: Save to local database
-            userDao.insertUser(
-                UserEntity(
-                    id = loginData.id,
-                    username = loginData.username,
-                    email = loginData.email,
-                    fullName = null,
-                    isActive = loginData.isActive
-                )
-            )
-            
-            saveAuthToken(loginData.token)
-            
-            Result.success(User(
-                id = loginData.id,
-                username = loginData.username,
-                email = loginData.email,
-                fullName = null,
-                isActive = loginData.isActive,
-                roles = emptyList(),
-                token = loginData.token
-            ))
+            handleLoginResponse(response)
         } catch (e: HttpException) {
             val errorMessage = when (e.code()) {
                 404 -> "Pengguna tidak ditemukan"
@@ -60,9 +38,53 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun loginGoogle(idToken: String, fcmToken: String?): Result<User> {
+        return try {
+            val response = authApi.loginGoogle(GoogleLoginRequest(idToken, fcmToken))
+            handleLoginResponse(response)
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = try {
+                val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
+                apiResponse.message
+            } catch (ex: Exception) {
+                "Terjadi kesalahan server (${e.code()})"
+            }
+            Result.failure(Exception(errorMessage))
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Gagal terhubung ke server"))
+        }
+    }
+
+    private suspend fun handleLoginResponse(response: ApiResponse<LoginResponse>): Result<User> {
+        val loginData = response.data ?: throw Exception("Data response kosong")
+        
+        // Offline First: Save to local database
+        userDao.insertUser(
+            UserEntity(
+                id = loginData.id,
+                username = loginData.username,
+                email = loginData.email,
+                fullName = null,
+                isActive = loginData.isActive
+            )
+        )
+        
+        saveAuthToken(loginData.token)
+        
+        return Result.success(User(
+            id = loginData.id,
+            username = loginData.username,
+            email = loginData.email,
+            fullName = null,
+            isActive = loginData.isActive,
+            roles = emptyList(),
+            token = loginData.token
+        ))
+    }
+
     override suspend fun register(username: String, email: String, password: String, fullName: String): Result<Unit> {
         return try {
-            // Otomatisasi roles sebagai CUSTOMER sesuai permintaan
             val request = RegisterRequest(
                 username = username,
                 password = password,
@@ -73,10 +95,9 @@ class AuthRepositoryImpl @Inject constructor(
             authApi.register(request)
             Result.success(Unit)
         } catch (e: HttpException) {
-            // Mengambil error body dari backend: {"success":false, "message":"Email sudah ada", ...}
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = try {
-                val apiResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+                val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
                 apiResponse.message
             } catch (ex: Exception) {
                 "Terjadi kesalahan server (${e.code()})"

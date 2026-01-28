@@ -1,3 +1,68 @@
 <resources>
-    <string name="app_name">genggaminmobile</string>
+    <string name="app_name">Genggamin Mobile</string>
+    <string name="default_web_client_id" translatable="false">196871791222-f0thn7i0sblkes63jrj3l3m6lbfq4g0b.apps.googleusercontent.com</string>
+
+    <!-- General -->
+    <string name="greeting_welcome">Selamat Datang,</string>
+    <string name="loading">Memuat...</string>
+    <string name="error_generic">Terjadi kesalahan</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="cancel">Batal</string>
+    <string name="submit">Kirim</string>
+    <string name="save">Simpan</string>
+    <string name="close">Tutup</string>
+
+    <!-- Home Screen -->
+    <string name="home_total_limit">Total Plafond Limit</string>
+    <string name="home_available_balance">Sisa Limit Tersedia</string>
+    <string name="home_quick_actions">Akses Cepat</string>
+    <string name="home_action_loan">Ajukan\nPinjaman</string>
+    <string name="home_action_history">Riwayat</string>
+    <string name="home_action_profile">Profil</string>
+    <string name="home_action_notification">Notifikasi</string>
+    <string name="home_action_help">Bantuan</string>
+    <string name="home_action_logout">Keluar</string>
+    <string name="home_action_login">Masuk</string>
+    <string name="home_available_plafonds">Produk Pinjaman</string>
+    <string name="home_plafond_max">Maks.</string>
+    <string name="home_plafond_max_format">Maks. %1$s</string>
+    <string name="home_plafond_interest">Bunga</string>
+    <string name="home_plafond_tenor">Tenor</string>
+    <string name="home_plafond_month">Bulan</string>
+    <string name="home_login_prompt">Masuk untuk melihat profil Anda</string>
+    <string name="home_login_button">Masuk</string>
+    <string name="home_complete_profile_title">Lengkapi Profil</string>
+    <string name="home_complete_profile_message">Anda harus melengkapi data profil terlebih dahulu untuk mengajukan pinjaman.</string>
+    <string name="home_complete_profile_button">Lengkapi Sekarang</string>
+    <string name="home_complete_profile_later">Nanti</string>
+    <string name="home_banner_description">Banner Promo</string>
+    <string name="home_promo_description">Promo</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_my_loans">Pinjaman Saya</string>
+    <string name="nav_profile">Profil</string>
+    <string name="nav_home_description">Beranda</string>
+    <string name="nav_loans_description">Daftar Pinjaman</string>
+    <string name="nav_profile_description">Profil Pengguna</string>
+
+    <!-- Loan Application -->
+    <string name="loan_app_title">Pengajuan Pinjaman</string>
+    <string name="loan_app_amount">Jumlah Pinjaman</string>
+    <string name="loan_app_amount_placeholder">Contoh: 10000000</string>
+    <string name="loan_app_tenor">Tenor (Bulan)</string>
+    <string name="loan_app_tenor_placeholder">Contoh: 12</string>
+    <string name="loan_app_purpose">Tujuan Pinjaman</string>
+    <string name="loan_app_purpose_placeholder">Contoh: Renovasi Rumah</string>
+    <string name="loan_app_plafond">Pilih Produk</string>
+    <string name="loan_app_summary">Ringkasan</string>
+    <string name="loan_app_submit_confirm">Ajukan Pinjaman</string>
+    <string name="loan_app_success">Pengajuan Berhasil!</string>
+    <string name="loan_app_success_msg">Pengajuan pinjaman Anda telah diterima dan akan segera diproses.</string>
+
+    <!-- Notification -->
+    <string name="notification_title">Notifikasi</string>
+    <string name="notification_empty">Belum ada notifikasi</string>
+    <string name="notification_mark_all_read">Tandai semua dibaca</string>
+
 </resources>

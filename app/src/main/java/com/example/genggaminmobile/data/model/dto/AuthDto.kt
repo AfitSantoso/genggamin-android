@@ -8,6 +8,11 @@ data class LoginRequest(
     @SerializedName("fcmToken") val fcmToken: String? = null
 )
 
+data class GoogleLoginRequest(
+    @SerializedName("idToken") val idToken: String,
+    @SerializedName("fcmToken") val fcmToken: String? = null
+)
+
 data class LoginResponse(
     @SerializedName("id") val id: Int,
     @SerializedName("username") val username: String,
