@@ -42,6 +42,7 @@ import com.example.genggaminmobile.data.model.dto.EmergencyContactDto
 import java.io.File
 import java.io.FileOutputStream
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -555,10 +556,84 @@ fun ModernSuccessDialog(onDismiss: () -> Unit) {
 fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, onDobChange: (String) -> Unit, pob: String, onPobChange: (String) -> Unit, address: String, onAddressChange: (String) -> Unit, phone: String, onPhoneChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(value = nik, onValueChange = onNikChange, label = "NIK (Wajib 16 Digit)", icon = Icons.Outlined.Badge, keyboardType = KeyboardType.Number)
-        ModernTextField(value = dob, onValueChange = onDobChange, label = "Tanggal Lahir (YYYY-MM-DD)", icon = Icons.Outlined.CalendarMonth)
+        
+        // Date of Birth with DatePicker
+        ModernDatePickerField(
+            value = dob,
+            onValueChange = onDobChange,
+            label = "Tanggal Lahir",
+            icon = Icons.Outlined.CalendarMonth
+        )
+        
         ModernTextField(value = pob, onValueChange = onPobChange, label = "Tempat Lahir", icon = Icons.Outlined.Place)
         ModernTextField(value = address, onValueChange = onAddressChange, label = "Alamat Sesuai KTP", icon = Icons.Outlined.Home, singleLine = false, minLines = 2)
         ModernTextField(value = phone, onValueChange = onPhoneChange, label = "Nomor Telepon", icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ModernDatePickerField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: ImageVector
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = { },
+            readOnly = true,
+            label = { Text(label) },
+            leadingIcon = { Icon(icon, null, modifier = Modifier.size(20.dp)) },
+            trailingIcon = { 
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(20.dp))
+                }
+            },
+            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+            shape = RoundedCornerShape(16.dp),
+            enabled = false, // Disable manual typing
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.primary,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledContainerColor = Color.Transparent
+            )
+        )
+        
+        // Invisible overlay to capture clicks since the field is disabled
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { showDatePicker = true }
+        )
+    }
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        onValueChange(sdf.format(Date(it)))
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
 
