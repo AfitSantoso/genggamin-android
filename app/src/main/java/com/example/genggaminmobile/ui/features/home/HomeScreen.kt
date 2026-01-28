@@ -40,49 +40,21 @@ fun HomeScreen(
     onNavigateToProfile: () -> Unit,
     onNavigateToLoanApp: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        bottomBar = {
-            NavigationBar(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
-            ) {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                    label = { Text(stringResource(R.string.nav_home)) },
-                    selected = true,
-                    onClick = { /* Already on Home */ }
-                )
-                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.List, contentDescription = "Pinjaman") },
-                    label = { Text(stringResource(R.string.nav_my_loans)) },
-                    selected = false,
-                    onClick = { /* Navigate to Loans List */ }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text(stringResource(R.string.nav_profile)) },
-                    selected = false,
-                    onClick = {
-                         if (uiState.isLoggedIn) onNavigateToProfile() else onNavigateToLogin()
-                    }
-                )
-            }
-        }
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+    // Scaffold removed, LazyColumn wraps content directly
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
             // Header
             item {
                 Row(
@@ -178,7 +150,9 @@ fun HomeScreen(
                     QuickActionItem(
                         icon = Icons.Default.History,
                         label = stringResource(R.string.home_action_history),
-                        onClick = { /* Navigate to History */ }
+                        onClick = { 
+                            if (uiState.isLoggedIn) onNavigateToHistory() else onNavigateToLogin()
+                        }
                     )
                     QuickActionItem(
                         icon = Icons.Default.ContactSupport,
@@ -212,18 +186,7 @@ fun HomeScreen(
             }
 
             // Active Loans Section
-            if (uiState.activeLoans.isNotEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.nav_my_loans),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                items(uiState.activeLoans) { loan ->
-                    ActiveLoanItem(loan, currencyFormatter)
-                }
-            }
+            // Active Loans Section Removed - Moved to History Screen
 
             // Recommendations (Plafonds)
             item {
@@ -315,7 +278,6 @@ fun HomeScreen(
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -364,23 +326,7 @@ fun PlafondItemModern(plafond: Plafond, onClick: () -> Unit, currencyFormatter: 
     }
 }
 
-@Composable
-fun ActiveLoanItem(loan: Loan, currencyFormatter: NumberFormat) {
-     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(loan.purpose ?: "Pinjaman", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                Text(loan.status, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onTertiaryContainer)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(currencyFormatter.format(loan.amount), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
-            Text("${loan.tenorMonths} Bulan", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer)
-        }
-    }
-}
+
 
 fun IfLogedIn(isLoggedIn: Boolean, trueVal: ImageVector, falseVal: ImageVector): ImageVector {
     return if (isLoggedIn) trueVal else falseVal

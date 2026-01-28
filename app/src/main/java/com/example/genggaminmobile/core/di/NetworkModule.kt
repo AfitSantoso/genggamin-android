@@ -1,14 +1,20 @@
 package com.example.genggaminmobile.core.di
 
+import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.data.remote.api.CustomerApi
 import com.example.genggaminmobile.data.remote.api.PlafondApi
 import com.example.genggaminmobile.data.remote.api.LoanApi
 import com.example.genggaminmobile.data.remote.api.NotificationApi
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -21,26 +27,51 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideGson(): Gson {
+        return GsonBuilder().create()
+    }
+
+    @Provides
+    @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.HEADERS // Changed from BODY to avoid binary log spam
         }
     }
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+    fun provideAuthInterceptor(preferencesManager: PreferencesManager): Interceptor {
+        return Interceptor { chain ->
+            val token = runBlocking {
+                preferencesManager.authToken.first()
+            }
+            val request = chain.request().newBuilder()
+            if (!token.isNullOrBlank()) {
+                request.addHeader("Authorization", "Bearer $token")
+            }
+            chain.proceed(request.build())
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        authInterceptor: Interceptor
+    ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.10.13.90:8080") // Updated to match user's environment if needed, but using the provided IP
-            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl("http://10.130.233.197:8080")
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(okHttpClient)
             .build()
     }

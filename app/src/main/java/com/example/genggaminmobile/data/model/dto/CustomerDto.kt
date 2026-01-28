@@ -4,9 +4,9 @@ import com.google.gson.annotations.SerializedName
 
 data class EmergencyContactDto(
     @SerializedName("id") val id: Int? = null,
-    @SerializedName("name") val name: String,
+    @SerializedName("name", alternate = ["contact_name", "contactName"]) val name: String,
     @SerializedName("relationship") val relationship: String,
-    @SerializedName("phone") val phone: String
+    @SerializedName("phone", alternate = ["contact_phone", "contactPhone"]) val phone: String
 )
 
 data class CustomerProfileRequest(
@@ -41,9 +41,9 @@ data class CustomerProfileResponse(
     @SerializedName("motherMaidenName") val motherMaidenName: String,
     @SerializedName("accountNumber") val accountNumber: String,
     @SerializedName("accountHolderName") val accountHolderName: String,
-    @SerializedName("ktpImagePath") val ktpImagePath: String,
-    @SerializedName("selfieImagePath") val selfieImagePath: String,
-    @SerializedName("payslipImagePath") val payslipImagePath: String?,
+    @SerializedName("ktpImagePath", alternate = ["ktp_image_path"]) val ktpImagePath: String?,
+    @SerializedName("selfieImagePath", alternate = ["selfie_image_path"]) val selfieImagePath: String?,
+    @SerializedName("payslipImagePath", alternate = ["payslip_image_path"]) val payslipImagePath: String?,
     @SerializedName("emergencyContacts") val emergencyContacts: List<EmergencyContactDto>,
     @SerializedName("createdAt") val createdAt: String
 )

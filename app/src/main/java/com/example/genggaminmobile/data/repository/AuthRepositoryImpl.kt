@@ -18,7 +18,8 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val userDao: UserDao,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val gson: Gson
 ) : AuthRepository {
 
     override suspend fun login(username: String, password: String, fcmToken: String?): Result<User> {
@@ -44,7 +45,7 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = try {
-                val apiResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+                val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
                 apiResponse.message
             } catch (ex: Exception) {
                 "Terjadi kesalahan server (${e.code()})"
@@ -96,7 +97,7 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = try {
-                val apiResponse = Gson().fromJson(errorBody, ApiResponse::class.java)
+                val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
                 apiResponse.message
             } catch (ex: Exception) {
                 "Terjadi kesalahan server (${e.code()})"

@@ -14,8 +14,8 @@ interface CustomerApi {
     @POST("customers/profile")
     suspend fun createOrUpdateProfile(
         @Part("data") data: RequestBody,
-        @Part ktp: MultipartBody.Part,
-        @Part selfie: MultipartBody.Part,
+        @Part ktp: MultipartBody.Part?,
+        @Part selfie: MultipartBody.Part?,
         @Part payslip: MultipartBody.Part? = null
     ): ApiResponse<CustomerProfileResponse>
 
