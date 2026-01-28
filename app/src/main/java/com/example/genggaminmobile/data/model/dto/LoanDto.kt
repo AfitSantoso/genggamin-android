@@ -11,7 +11,6 @@ data class LoanDto(
     @SerializedName("status") val status: String? = null,
     @SerializedName("interestRate") val interestRate: Double? = null,
     @SerializedName("submittedAt") val submittedAt: String? = null,
-    // Add other fields if necessary
 )
 
 data class LoanLimitDto(
@@ -25,7 +24,7 @@ data class LoanLimitDto(
 
 data class LoanRequest(
     @SerializedName("amount") val amount: Long,
-    @SerializedName("tenor") val tenor: Int,
+    @SerializedName("tenureMonths") val tenureMonths: Int,
     @SerializedName("purpose") val purpose: String,
     @SerializedName("plafondId") val plafondId: Long
 )
