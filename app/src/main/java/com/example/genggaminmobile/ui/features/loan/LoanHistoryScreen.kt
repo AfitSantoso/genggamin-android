@@ -1,9 +1,12 @@
 package com.example.genggaminmobile.ui.features.loan
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,13 +38,16 @@ fun LoanHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    var selectedLoan by remember { mutableStateOf<Loan?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+    var showDetailSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Riwayat Pinjaman", 
+                        if (uiState.isHistoryView) "Riwayat Pinjaman" else "Pinjaman Aktif", 
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 0.5.sp
                     ) 
@@ -56,106 +62,73 @@ fun LoanHistoryScreen(
                         Icon(Icons.Outlined.Refresh, contentDescription = "Refresh")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent
                 )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            AnimatedContent(
-                targetState = uiState.isLoading to uiState.loans.isEmpty(),
-                transitionSpec = {
-                    fadeIn() togetherWith fadeOut()
-                },
-                label = "HistoryContentTransition"
-            ) { (isLoading, isEmpty) ->
-                when {
-                    isLoading && uiState.loans.isEmpty() -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(strokeWidth = 3.dp)
-                        }
-                    }
-                    uiState.error != null && uiState.loans.isEmpty() -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Button(onClick = { viewModel.loadLoans() }, shape = RoundedCornerShape(12.dp)) {
-                                Text("Coba Lagi")
+            // View Switcher (Active vs History)
+            ViewSwitcher(
+                isHistoryView = uiState.isHistoryView,
+                onViewChange = { viewModel.setHistoryView(it) }
+            )
+
+            if (uiState.isHistoryView) {
+                FilterSection(
+                    selectedFilter = uiState.selectedFilter,
+                    onFilterSelected = { viewModel.setFilter(it) }
+                )
+            }
+
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                AnimatedContent(
+                    targetState = uiState.isLoading to uiState.filteredLoans.isEmpty(),
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    label = "HistoryContentTransition"
+                ) { (isLoading, isEmpty) ->
+                    when {
+                        isLoading && uiState.filteredLoans.isEmpty() -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(strokeWidth = 3.dp)
                             }
                         }
-                    }
-                    isEmpty -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize().padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Surface(
-                                modifier = Modifier.size(120.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        uiState.error != null && uiState.filteredLoans.isEmpty() -> {
+                            ErrorState(error = uiState.error!!, onRetry = { viewModel.loadLoans() })
+                        }
+                        isEmpty -> {
+                            EmptyState(isHistory = uiState.isHistoryView)
+                        }
+                        else -> {
+                            LazyColumn(
+                                contentPadding = PaddingValues(bottom = 32.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                                modifier = Modifier.fillMaxSize()
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.History,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.primary
+                                item {
+                                    LoanSummaryHeader(uiState.filteredLoans, currencyFormatter, uiState.isHistoryView)
+                                }
+                                
+                                items(uiState.filteredLoans) { loan ->
+                                    ModernLoanItem(
+                                        loan = loan, 
+                                        currencyFormatter = currencyFormatter,
+                                        modifier = Modifier
+                                            .padding(horizontal = 20.dp)
+                                            .clickable {
+                                                selectedLoan = loan
+                                                showDetailSheet = true
+                                            }
                                     )
                                 }
-                            }
-                            Spacer(modifier = Modifier.height(24.dp))
-                            Text(
-                                text = "Belum Ada Riwayat",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Anda belum memiliki riwayat peminjaman saat ini.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                    else -> {
-                        LazyColumn(
-                            contentPadding = PaddingValues(bottom = 32.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            item {
-                                LoanSummaryHeader(uiState.loans, currencyFormatter)
-                            }
-                            
-                            item {
-                                Text(
-                                    "Daftar Transaksi",
-                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.ExtraBold
-                                )
-                            }
-                            
-                            items(uiState.loans) { loan ->
-                                ModernLoanItem(
-                                    loan = loan, 
-                                    currencyFormatter = currencyFormatter,
-                                    modifier = Modifier.padding(horizontal = 20.dp)
-                                )
                             }
                         }
                     }
@@ -163,12 +136,162 @@ fun LoanHistoryScreen(
             }
         }
     }
+
+    if (showDetailSheet && selectedLoan != null) {
+        ModalBottomSheet(
+            onDismissRequest = { showDetailSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            LoanDetailContent(
+                loan = selectedLoan!!,
+                currencyFormatter = currencyFormatter,
+                onClose = { showDetailSheet = false }
+            )
+        }
+    }
 }
 
 @Composable
-fun LoanSummaryHeader(loans: List<Loan>, currencyFormatter: NumberFormat) {
-    val totalBorrowed = loans.sumOf { it.amount.toDouble() }.toLong()
-    val activeLoans = loans.count { it.status.lowercase() in listOf("approved", "disetujui") }
+fun ViewSwitcher(isHistoryView: Boolean, onViewChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .height(48.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(4.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (!isHistoryView) MaterialTheme.colorScheme.primary else Color.Transparent)
+                .clickable { onViewChange(false) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Pinjaman Aktif",
+                color = if (!isHistoryView) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (!isHistoryView) FontWeight.Bold else FontWeight.Normal,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(4.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (isHistoryView) MaterialTheme.colorScheme.primary else Color.Transparent)
+                .clickable { onViewChange(true) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                "Riwayat",
+                color = if (isHistoryView) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (isHistoryView) FontWeight.Bold else FontWeight.Normal,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+fun FilterSection(selectedFilter: String, onFilterSelected: (String) -> Unit) {
+    val filters = listOf(
+        "ALL" to "Semua",
+        "ACTIVE" to "Aktif",
+        "REJECTED" to "Ditolak"
+    )
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(filters) { (id, label) ->
+            val isSelected = selectedFilter == id
+            FilterChip(
+                selected = isSelected,
+                onClick = { onFilterSelected(id) },
+                label = { Text(label) },
+                shape = RoundedCornerShape(12.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    selectedLabelColor = MaterialTheme.colorScheme.primary
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = isSelected,
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    selectedBorderColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorState(error: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(Icons.Outlined.ErrorOutline, contentDescription = null, modifier = Modifier.size(64.dp), tint = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = error, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRetry, shape = RoundedCornerShape(12.dp)) {
+            Text("Coba Lagi")
+        }
+    }
+}
+
+@Composable
+fun EmptyState(isHistory: Boolean) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = if (isHistory) Icons.Outlined.History else Icons.Outlined.AccountBalanceWallet,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = if (isHistory) "Belum Ada Riwayat" else "Tidak Ada Pinjaman Aktif",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = if (isHistory) "Anda belum memiliki riwayat peminjaman saat ini." else "Saat ini Anda tidak memiliki pinjaman yang sedang berjalan.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+fun LoanSummaryHeader(loans: List<Loan>, currencyFormatter: NumberFormat, isHistory: Boolean) {
+    val totalAmount = loans.sumOf { it.amount.toDouble() }.toLong()
 
     Box(
         modifier = Modifier
@@ -186,9 +309,13 @@ fun LoanSummaryHeader(loans: List<Loan>, currencyFormatter: NumberFormat) {
             .padding(24.dp)
     ) {
         Column {
-            Text("Total Pinjaman", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelLarge)
             Text(
-                text = currencyFormatter.format(totalBorrowed),
+                if (isHistory) "Total Keseluruhan" else "Total Pinjaman Aktif", 
+                color = Color.White.copy(alpha = 0.8f), 
+                style = MaterialTheme.typography.labelLarge
+            )
+            Text(
+                text = currencyFormatter.format(totalAmount),
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White,
                 fontWeight = FontWeight.ExtraBold
@@ -199,14 +326,14 @@ fun LoanSummaryHeader(loans: List<Loan>, currencyFormatter: NumberFormat) {
                     color = Color.White.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("$activeLoans Aktif", color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    }
+                    Text(
+                        "${loans.size} Transaksi", 
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = Color.White, 
+                        style = MaterialTheme.typography.labelMedium, 
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("${loans.size} Total Transaksi", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -266,7 +393,7 @@ fun ModernLoanItem(loan: Loan, currencyFormatter: NumberFormat, modifier: Modifi
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    Text("Jumlah Cair", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Jumlah Pinjaman", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = currencyFormatter.format(loan.amount),
                         style = MaterialTheme.typography.titleMedium,
@@ -274,15 +401,171 @@ fun ModernLoanItem(loan: Loan, currencyFormatter: NumberFormat, modifier: Modifi
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Tenor", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+            }
+        }
+    }
+}
+
+@Composable
+fun LoanDetailContent(
+    loan: Loan,
+    currencyFormatter: NumberFormat,
+    onClose: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+            .navigationBarsPadding()
+    ) {
+        Text(
+            "Detail Pinjaman",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Process Path (Stepper)
+        LoanProcessPath(status = loan.status)
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Info Section
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                DetailRow("Nomor Referensi", "#${loan.id}")
+                DetailRow("Tujuan", loan.purpose ?: "Personal")
+                DetailRow("Jumlah Pinjaman", currencyFormatter.format(loan.amount))
+                DetailRow("Tenor", "${loan.tenorMonths} Bulan")
+                DetailRow("Suku Bunga", "${loan.interestRate ?: 0.0}%")
+                DetailRow("Tanggal Pengajuan", loan.date ?: "-")
+                DetailRow("Status", loan.status.uppercase(), color = getStatusColor(loan.status).second)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = onClose,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text("Tutup")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String, color: Color = MaterialTheme.colorScheme.onSurface) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+    }
+}
+
+@Composable
+fun LoanProcessPath(status: String) {
+    val statusLower = status.lowercase()
+    val currentStep = when (statusLower) {
+        "submitted", "pending", "menunggu" -> 1
+        "under_review", "proses_verifikasi" -> 2
+        "approved", "disetujui" -> 3
+        "disbursed", "cair" -> 4
+        "rejected", "ditolak" -> -1
+        else -> 0
+    }
+
+    val steps = listOf("Submit", "Verifikasi", "Disetujui", "Cair")
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            steps.forEachIndexed { index, title ->
+                val stepIndex = index + 1
+                // Logika ceklis (isCompleted): 
+                // Jika sudah melewati langkah tersebut atau status saat ini adalah langkah tersebut.
+                val isCompleted = if (currentStep == -1) {
+                    stepIndex < 2 // Jika ditolak, hanya langkah pertama (Submit) yang mungkin centang
+                } else {
+                    stepIndex <= currentStep
+                }
+                
+                val isCurrent = stepIndex == currentStep
+                val isFailed = statusLower in listOf("rejected", "ditolak") && stepIndex == 2 
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        // Connector Line
+                        if (index < steps.size - 1) {
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = 40.dp) 
+                                    .width(60.dp)
+                                    .height(2.dp)
+                                    .background(
+                                        if (isCompleted && stepIndex < currentStep) MaterialTheme.colorScheme.primary 
+                                        else MaterialTheme.colorScheme.outlineVariant
+                                    )
+                            )
+                        }
+                        
+                        // Step Circle
+                        Surface(
+                            modifier = Modifier.size(32.dp),
+                            shape = CircleShape,
+                            color = when {
+                                isFailed -> MaterialTheme.colorScheme.error
+                                isCompleted -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            border = if (!isCompleted && !isFailed) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                if (isCompleted && !isFailed) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                } else if (isFailed) {
+                                    Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                } else {
+                                    Text("${index + 1}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "${loan.tenorMonths} Bulan",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        text = title,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                        color = if (isCurrent || isCompleted) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+        }
+        
+        if (statusLower in listOf("rejected", "ditolak")) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "Pengajuan Anda ditolak pada tahap verifikasi.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -307,15 +590,15 @@ fun ModernStatusChip(status: String) {
 }
 
 fun getStatusColor(status: String): Pair<Color, Color> = when (status.lowercase()) {
-    "approved", "disetujui" -> Color(0xFF4CAF50) to Color(0xFF1B5E20)
-    "pending", "menunggu" -> Color(0xFFFF9800) to Color(0xFFE65100)
+    "approved", "disetujui", "disbursed", "cair" -> Color(0xFF4CAF50) to Color(0xFF1B5E20)
+    "submitted", "pending", "menunggu", "under_review" -> Color(0xFFFF9800) to Color(0xFFE65100)
     "rejected", "ditolak" -> Color(0xFFF44336) to Color(0xFFB71C1C)
     else -> Color(0xFF9E9E9E) to Color(0xFF424242)
 }
 
 fun getStatusIcon(status: String): ImageVector = when (status.lowercase()) {
-    "approved", "disetujui" -> Icons.Default.CheckCircle
-    "pending", "menunggu" -> Icons.Default.Schedule
+    "approved", "disetujui", "disbursed", "cair" -> Icons.Default.CheckCircle
+    "submitted", "pending", "menunggu", "under_review" -> Icons.Default.Schedule
     "rejected", "ditolak" -> Icons.Default.Cancel
     else -> Icons.Default.HelpOutline
 }
