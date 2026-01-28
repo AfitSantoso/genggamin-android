@@ -1,5 +1,7 @@
 package com.example.genggaminmobile.ui.features.profile
 
+import android.Manifest
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -587,22 +590,119 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
 }
 
 @Composable
-fun DocumentUploadStep(ktp: File?, onKtpSelect: (File) -> Unit, selfie: File?, onSelfieSelect: (File) -> Unit, payslip: File?, onPayslipSelect: (File) -> Unit) {
+fun DocumentUploadStep(
+    ktp: File?, onKtpSelect: (File) -> Unit,
+    selfie: File?, onSelfieSelect: (File) -> Unit,
+    payslip: File?, onPayslipSelect: (File) -> Unit
+) {
     val context = LocalContext.current
-    fun uriToFile(uri: Uri): File {
-        val file = File(context.cacheDir, "upload_${System.currentTimeMillis()}.jpg")
-        context.contentResolver.openInputStream(uri)?.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
-        return file
+    var showSheetForKtp by remember { mutableStateOf(false) }
+    var showSheetForSelfie by remember { mutableStateOf(false) }
+    var showSheetForPayslip by remember { mutableStateOf(false) }
+
+    var tempCameraFile by remember { mutableStateOf<File?>(null) }
+    var currentPickingType by remember { mutableStateOf<String?>(null) }
+
+    fun createTempFile(): File {
+        return File(context.cacheDir, "camera_${System.currentTimeMillis()}.jpg")
     }
-    val ktpLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { onKtpSelect(uriToFile(it)) } }
-    val selfieLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { onSelfieSelect(uriToFile(it)) } }
-    val payslipLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { onPayslipSelect(uriToFile(it)) } }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            when (currentPickingType) {
+                "ktp" -> onKtpSelect(file)
+                "selfie" -> onSelfieSelect(file)
+                "payslip" -> onPayslipSelect(file)
+            }
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            tempCameraFile?.let { file ->
+                when (currentPickingType) {
+                    "ktp" -> onKtpSelect(file)
+                    "selfie" -> onSelfieSelect(file)
+                    "payslip" -> onPayslipSelect(file)
+                }
+            }
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            val file = createTempFile()
+            tempCameraFile = file
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            cameraLauncher.launch(uri)
+        }
+    }
+
+    fun launchCamera(type: String) {
+        currentPickingType = type
+        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    fun launchGallery(type: String) {
+        currentPickingType = type
+        galleryLauncher.launch("image/*")
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernUploadItem("Foto KTP", ktp != null, onClick = { ktpLauncher.launch("image/*") })
-        ModernUploadItem("Foto Selfie + KTP", selfie != null, onClick = { selfieLauncher.launch("image/*") })
-        ModernUploadItem("Foto Slip Gaji", payslip != null, onClick = { payslipLauncher.launch("image/*") })
+        ModernUploadItem("Foto KTP", ktp != null, onClick = { showSheetForKtp = true })
+        ModernUploadItem("Foto Selfie + KTP", selfie != null, onClick = { showSheetForSelfie = true })
+        ModernUploadItem("Foto Slip Gaji", payslip != null, onClick = { showSheetForPayslip = true })
     }
+
+    if (showSheetForKtp) ImagePickerSheet(
+        onDismiss = { showSheetForKtp = false },
+        onCamera = { launchCamera("ktp"); showSheetForKtp = false },
+        onGallery = { launchGallery("ktp"); showSheetForKtp = false }
+    )
+    if (showSheetForSelfie) ImagePickerSheet(
+        onDismiss = { showSheetForSelfie = false },
+        onCamera = { launchCamera("selfie"); showSheetForSelfie = false },
+        onGallery = { launchGallery("selfie"); showSheetForSelfie = false }
+    )
+    if (showSheetForPayslip) ImagePickerSheet(
+        onDismiss = { showSheetForPayslip = false },
+        onCamera = { launchCamera("payslip"); showSheetForPayslip = false },
+        onGallery = { launchGallery("payslip"); showSheetForPayslip = false }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ImagePickerSheet(onDismiss: () -> Unit, onCamera: () -> Unit, onGallery: () -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
+            Text("Pilih Sumber Foto", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                PickerOption(Icons.Default.CameraAlt, "Kamera", onClick = onCamera)
+                PickerOption(Icons.Default.PhotoLibrary, "Galeri", onClick = onGallery)
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun PickerOption(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(onClick = onClick)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(64.dp)) {
+            Box(contentAlignment = Alignment.Center) { Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp)) }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+fun uriToFile(context: Context, uri: Uri): File {
+    val file = File(context.cacheDir, "upload_${System.currentTimeMillis()}.jpg")
+    context.contentResolver.openInputStream(uri)?.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
+    return file
 }
 
 @Composable
