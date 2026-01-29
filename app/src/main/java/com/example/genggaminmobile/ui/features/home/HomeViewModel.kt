@@ -54,11 +54,10 @@ class HomeViewModel @Inject constructor(
             
             _uiState.value = _uiState.value.copy(
                 isLoggedIn = isLoggedIn,
-                isLoading = false // Set temporarily false to show UI, individual loads will handle loading
+                isLoading = false
             )
 
             if (isLoggedIn) {
-                // Load critical data in parallel
                 launch { loadProfile() }
                 launch { loadLimits() }
                 launch { loadActiveLoans() }
@@ -88,13 +87,17 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun loadLimits() {
-         loanRepository.getMyLimits().onSuccess { limits ->
-             _uiState.value = _uiState.value.copy(loanLimits = limits)
+         viewModelScope.launch {
+             loanRepository.getLimitsFlow().collect { limits ->
+                 _uiState.value = _uiState.value.copy(loanLimits = limits)
+             }
          }
+         loanRepository.getMyLimits()
     }
 
     private suspend fun loadActiveLoans() {
-        loanRepository.getMyLoans().onSuccess { loans ->
+        // Karena getMyLoans() mengembalikan Flow, kita kumpulkan (collect) datanya
+        loanRepository.getMyLoans().collect { loans ->
             _uiState.value = _uiState.value.copy(activeLoans = loans)
         }
     }

@@ -66,14 +66,14 @@ fun NavGraph(
                     currentRoute = currentRoute,
                     onNavigate = { route ->
                         if (currentRoute != route) {
-                            navController.navigate(route) {
-                                if (route == Screen.Home.route) {
-                                    popUpTo(Screen.Home.route) { inclusive = true }
-                                } else {
+                            if (route == Screen.Home.route) {
+                                navController.popBackStack(Screen.Home.route, false)
+                            } else {
+                                navController.navigate(route) {
                                     popUpTo(Screen.Home.route)
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     }

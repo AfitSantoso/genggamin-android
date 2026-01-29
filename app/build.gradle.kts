@@ -87,6 +87,11 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
     // Google Sign-In (Credential Manager)
     implementation(libs.androidx.credentials.core)
     implementation(libs.androidx.credentials.play)

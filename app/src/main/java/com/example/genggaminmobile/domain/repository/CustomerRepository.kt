@@ -12,4 +12,6 @@ interface CustomerRepository {
         selfie: File?,
         payslip: File?
     ): Result<CustomerProfileResponse>
+
+    suspend fun syncPendingProfile(): Result<Unit>
 }

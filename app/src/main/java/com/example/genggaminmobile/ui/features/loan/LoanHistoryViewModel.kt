@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,8 +37,18 @@ class LoanHistoryViewModel @Inject constructor(
     fun loadLoans() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            loanRepository.getMyLoans().fold(
-                onSuccess = { loans ->
+            
+            // Pemicu sinkronisasi data dari API agar database lokal terisi
+            loanRepository.refreshLoans()
+            
+            loanRepository.getMyLoans()
+                .catch { e ->
+                    _uiState.update { it.copy(
+                        error = e.message ?: "Gagal memuat riwayat peminjaman",
+                        isLoading = false
+                    ) }
+                }
+                .collect { loans ->
                     _uiState.update { state ->
                         state.copy(
                             allLoans = loans,
@@ -45,14 +56,7 @@ class LoanHistoryViewModel @Inject constructor(
                         )
                     }
                     applyFilter(_uiState.value.selectedFilter, _uiState.value.isHistoryView)
-                },
-                onFailure = { e ->
-                    _uiState.update { it.copy(
-                        error = e.message ?: "Gagal memuat riwayat peminjaman",
-                        isLoading = false
-                    ) }
                 }
-            )
         }
     }
 

@@ -100,19 +100,27 @@ class LoanViewModel @Inject constructor(
         val tenor = state.tenorInput.toIntOrNull() ?: 0
 
         if (amount > 0 && tenor > 0) {
-            val annualInterestRate = plafond.interestRate / 100.0
-            val monthlyInterestRate = annualInterestRate / 12.0
+            // Simple Flat Rate Calculation as requested by User
+            // Logic: Interest = Principal * (Rate%) * Tenor
+            // Note: User specified 4% flat charged per month -> rate treated as monthly rate?
+            // "bung 4% itu di kenakan 6x karena 6 bulan tenor" -> 4% * 6
+            // The rate in Plafond object usually is Annual or Monthly? 
+            // In absence of confirmation, I will treat plafond.interestRate as the rate to be applied monthly.
             
-            // Fixed Installment Formula: P * r * (1+r)^n / ((1+r)^n - 1)
-            val monthlyInstallment = if (monthlyInterestRate > 0) {
-                val factor = (1.0 + monthlyInterestRate).pow(tenor.toDouble())
-                (amount * monthlyInterestRate * factor / (factor - 1.0)).toLong()
-            } else {
-                amount / tenor
-            }
+            // However, typically rates are Annual. If 4% is Annual, then monthly is 4/12 %.
+            // User EXAMPLE: "bunga 4%, tenor 6 bulan -> 4% dikenakan 6x".
+            // This strongly implies provided rate (4) is MONTHLY rate.
+            // Or maybe the user means 4% per month. 
+            // I will use plafond.interestRate as MONTHLY percentage for this calculation.
+            
+            val monthlyInterestRatePercent = plafond.interestRate // e.g. 4.0
+            val totalInterestPercent = monthlyInterestRatePercent * tenor // e.g. 24.0%
+            
+            val totalInterest = (amount * (totalInterestPercent / 100.0)).toLong()
+            val totalRepayment = amount + totalInterest
+            val monthlyInstallment = totalRepayment / tenor
 
-            val totalRepayment = monthlyInstallment * tenor
-            val totalInterest = totalRepayment - amount
+
 
             _uiState.value = _uiState.value.copy(
                 simulation = LoanSimulation(
