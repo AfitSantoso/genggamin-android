@@ -496,7 +496,7 @@ fun DocumentItem(label: String, url: String?, lastUpdated: Long, modifier: Modif
             if (!url.isNullOrBlank()) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(url)
+                        .data(if (url.startsWith("/")) File(url) else url)
                         .memoryCacheKey("$url-$lastUpdated")
                         .build(),
                     contentDescription = label,

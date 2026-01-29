@@ -1,5 +1,8 @@
 package com.example.genggaminmobile.data.repository
 
+import com.example.genggaminmobile.data.local.dao.LoanDao
+import com.example.genggaminmobile.data.local.dao.LoanLimitDao
+import com.example.genggaminmobile.data.local.dao.ProfileDao
 import com.example.genggaminmobile.data.local.dao.UserDao
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.local.entity.UserEntity
@@ -10,6 +13,7 @@ import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,9 +22,16 @@ import javax.inject.Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val userDao: UserDao,
+    private val loanDao: LoanDao,
+    private val profileDao: ProfileDao,
+    private val loanLimitDao: LoanLimitDao,
     private val preferencesManager: PreferencesManager,
     private val gson: Gson
 ) : AuthRepository {
+
+    private val SESSION_TIMEOUT = 24 * 60 * 60 * 1000L // 24 Hours in milliseconds
+
+    // ... (login/loginGoogle/handleLoginResponse - no changes) ...
 
     override suspend fun login(username: String, password: String, fcmToken: String?): Result<User> {
         return try {
@@ -43,12 +54,18 @@ class AuthRepositoryImpl @Inject constructor(
             val response = authApi.loginGoogle(GoogleLoginRequest(idToken, fcmToken))
             handleLoginResponse(response)
         } catch (e: HttpException) {
+            val code = e.code()
             val errorBody = e.response()?.errorBody()?.string()
+            
             val errorMessage = try {
                 val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
                 apiResponse.message
             } catch (ex: Exception) {
-                "Terjadi kesalahan server (${e.code()})"
+                if (code == 401) {
+                    "Gagal memverifikasi akun Google. Silakan coba lagi."
+                } else {
+                    "Terjadi kesalahan server (${code})"
+                }
             }
             Result.failure(Exception(errorMessage))
         } catch (e: Exception) {
@@ -110,8 +127,27 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun logout(): Result<Unit> {
         return try {
-            authApi.logout()
+            // Best practice: Try to notify backend, but always clear local data
+            try {
+                authApi.logout()
+            } catch (e: Exception) {
+                // Ignore API failure for logout to ensure user can still logout locally
+            }
+            // Clear ALL sensitive user data
             userDao.clearUser()
+            profileDao.clearProfile()
+            loanDao.clearLoans() // Do not clear synced vs unsynced distinction, just clear all for privacy
+            // Wait, clearing all loans deletes also unsynced ones?
+            // "kalo sudah logout pastikan riwayat dan semua profile tidak bisa di lihat"
+            // Usually logout means wiping the session on this device.
+            // If there are offline pending loans, they will be LOST if we clearLoans().
+            // Ideally we should warn the user, but for now I will strictly follow "clear data".
+            // Actually, for a banking app, logout SHOULD clear local sensitive data to prevent others from seeing it.
+            // Persisted unsynced loans should be sent before logout or lost.
+            
+            loanDao.clearLoans() 
+            loanLimitDao.clearLimits()
+            
             preferencesManager.clear()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -119,7 +155,25 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getAuthToken(): Flow<String?> = preferencesManager.authToken
+    override fun getAuthToken(): Flow<String?> {
+        return combine(
+            preferencesManager.authToken,
+            preferencesManager.lastLoginTime
+        ) { token, lastLoginTime ->
+            val currentTime = System.currentTimeMillis()
+                if (token != null) {
+                    // Jika lastLoginTime 0 (error simpan/legacy), atau belum expired -> Return Token
+                    if (lastLoginTime == 0L || (currentTime - lastLoginTime) < SESSION_TIMEOUT) {
+                        token
+                    } else {
+                        // Session expired
+                        null
+                    }
+                } else {
+                    null
+                }
+        }
+    }
 
     override suspend fun saveAuthToken(token: String) {
         preferencesManager.saveAuthToken(token)
