@@ -11,6 +11,8 @@ data class LoanDto(
     @SerializedName("status") val status: String? = null,
     @SerializedName("interestRate") val interestRate: Double? = null,
     @SerializedName("submittedAt") val submittedAt: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null
 )
 
 data class LoanLimitDto(
@@ -26,7 +28,9 @@ data class LoanRequest(
     @SerializedName("amount") val amount: Long,
     @SerializedName("tenureMonths") val tenureMonths: Int,
     @SerializedName("purpose") val purpose: String,
-    @SerializedName("plafondId") val plafondId: Long
+    @SerializedName("plafondId") val plafondId: Long,
+    @SerializedName("latitude") val latitude: Double,
+    @SerializedName("longitude") val longitude: Double
 )
 
 data class LoanResponse(

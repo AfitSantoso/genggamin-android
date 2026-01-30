@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.pow
 
 data class LoanSimulation(
     val monthlyInstallment: Long = 0,
@@ -32,13 +31,16 @@ data class LoanApplicationUiState(
     val amountInput: String = "",
     val tenorInput: String = "",
     val purposeInput: String = "",
-    val simulation: LoanSimulation? = null
+    val simulation: LoanSimulation? = null,
+    val latitude: Double = -6.2866713, // Default hardcode
+    val longitude: Double = 106.7791363 // Default hardcode
 )
 
 @HiltViewModel
 class LoanViewModel @Inject constructor(
     private val loanRepository: LoanRepository,
-    private val plafondRepository: PlafondRepository
+    private val plafondRepository: PlafondRepository,
+    private val customerRepository: com.example.genggaminmobile.domain.repository.CustomerRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoanApplicationUiState())
@@ -52,7 +54,19 @@ class LoanViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
-            val plafondsResult = plafondRepository.getAllPlafonds()
+            
+            val profileResult = customerRepository.getProfile()
+            val plafondsResult = if (profileResult.isSuccess) {
+                val profile = profileResult.getOrNull()
+                if (profile != null) {
+                    plafondRepository.getPlafondsByIncome(profile.monthlyIncome)
+                } else {
+                    plafondRepository.getAllPlafonds()
+                }
+            } else {
+                plafondRepository.getAllPlafonds()
+            }
+            
             val limitsResult = loanRepository.getMyLimits()
 
             if (plafondsResult.isSuccess && limitsResult.isSuccess) {
@@ -68,6 +82,13 @@ class LoanViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun updateLocation(lat: Double, lon: Double) {
+        _uiState.value = _uiState.value.copy(
+            latitude = lat,
+            longitude = lon
+        )
     }
 
     fun onPlafondSelected(plafond: Plafond) {
@@ -100,27 +121,12 @@ class LoanViewModel @Inject constructor(
         val tenor = state.tenorInput.toIntOrNull() ?: 0
 
         if (amount > 0 && tenor > 0) {
-            // Simple Flat Rate Calculation as requested by User
-            // Logic: Interest = Principal * (Rate%) * Tenor
-            // Note: User specified 4% flat charged per month -> rate treated as monthly rate?
-            // "bung 4% itu di kenakan 6x karena 6 bulan tenor" -> 4% * 6
-            // The rate in Plafond object usually is Annual or Monthly? 
-            // In absence of confirmation, I will treat plafond.interestRate as the rate to be applied monthly.
-            
-            // However, typically rates are Annual. If 4% is Annual, then monthly is 4/12 %.
-            // User EXAMPLE: "bunga 4%, tenor 6 bulan -> 4% dikenakan 6x".
-            // This strongly implies provided rate (4) is MONTHLY rate.
-            // Or maybe the user means 4% per month. 
-            // I will use plafond.interestRate as MONTHLY percentage for this calculation.
-            
-            val monthlyInterestRatePercent = plafond.interestRate // e.g. 4.0
-            val totalInterestPercent = monthlyInterestRatePercent * tenor // e.g. 24.0%
+            val monthlyInterestRatePercent = plafond.interestRate 
+            val totalInterestPercent = monthlyInterestRatePercent * tenor 
             
             val totalInterest = (amount * (totalInterestPercent / 100.0)).toLong()
             val totalRepayment = amount + totalInterest
             val monthlyInstallment = totalRepayment / tenor
-
-
 
             _uiState.value = _uiState.value.copy(
                 simulation = LoanSimulation(
@@ -176,7 +182,9 @@ class LoanViewModel @Inject constructor(
                 amount = amount,
                 tenor = tenor,
                 purpose = state.purposeInput,
-                plafondId = state.selectedPlafond.id.toLong()
+                plafondId = state.selectedPlafond.id.toLong(),
+                latitude = state.latitude,
+                longitude = state.longitude
             ).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false, success = true)

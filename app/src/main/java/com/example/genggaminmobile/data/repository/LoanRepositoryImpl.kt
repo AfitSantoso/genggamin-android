@@ -57,7 +57,14 @@ class LoanRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun submitLoan(amount: Long, tenor: Int, purpose: String, plafondId: Long): Result<Unit> {
+    override suspend fun submitLoan(
+        amount: Long,
+        tenor: Int,
+        purpose: String,
+        plafondId: Long,
+        latitude: Double,
+        longitude: Double
+    ): Result<Unit> {
         val localLoan = Loan(
             id = null,
             amount = amount,
@@ -71,7 +78,11 @@ class LoanRepositoryImpl @Inject constructor(
 
         return try {
             // 1. Save to Local First (Offline First)
-            val localId = loanDao.insertLoan(localLoan.toEntity(isSynced = false))
+            val entity = localLoan.toEntity(isSynced = false).copy(
+                latitude = latitude,
+                longitude = longitude
+            )
+            val localId = loanDao.insertLoan(entity)
 
             // Update local limit immediately to reflect change in UI even if offline
             val limitEntity = loanLimitDao.getLimitByPlafondId(plafondId)
@@ -81,13 +92,14 @@ class LoanRepositoryImpl @Inject constructor(
             }
             
             // 2. Try to sync immediately
-            val response = loanApi.submitLoan(LoanRequest(amount, tenor, purpose, plafondId))
+            val response = loanApi.submitLoan(LoanRequest(amount, tenor, purpose, plafondId, latitude, longitude))
             if (response.success) {
                 // 3. Update local record with remote ID and status
-                val updatedEntity = localLoan.toEntity(isSynced = true).copy(
+                val updatedEntity = entity.copy(
                     localId = localId,
                     remoteId = response.data?.id,
-                    status = response.data?.status ?: "PENDING"
+                    status = response.data?.status ?: "PENDING",
+                    isSynced = true
                 )
                 loanDao.updateLoan(updatedEntity)
                 Result.success(Unit)
@@ -185,7 +197,14 @@ class LoanRepositoryImpl @Inject constructor(
         unsynced.forEach { entity ->
             try {
                 val response = loanApi.submitLoan(
-                    LoanRequest(entity.amount, entity.tenorMonths, entity.purpose ?: "", entity.plafondId)
+                    LoanRequest(
+                        entity.amount, 
+                        entity.tenorMonths, 
+                        entity.purpose ?: "", 
+                        entity.plafondId,
+                        entity.latitude ?: -6.2866713,
+                        entity.longitude ?: 106.7791363
+                    )
                 )
                 if (response.success) {
                     loanDao.updateLoan(entity.copy(

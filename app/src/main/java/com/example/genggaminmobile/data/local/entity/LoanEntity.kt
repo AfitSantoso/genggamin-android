@@ -15,7 +15,9 @@ data class LoanEntity(
     val status: String,
     val interestRate: Double?,
     val date: String?,
-    val isSynced: Boolean = true
+    val isSynced: Boolean = true,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 fun LoanEntity.toDomain() = Loan(
