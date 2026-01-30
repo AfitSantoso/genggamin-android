@@ -1,5 +1,10 @@
 package com.example.genggaminmobile.ui.features.loan
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -23,13 +28,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.domain.model.LoanLimit
 import com.example.genggaminmobile.domain.model.Plafond
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import java.text.NumberFormat
 import java.util.*
 
@@ -40,7 +50,34 @@ fun LoanApplicationScreen(
     viewModel: LoanViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    // Launcher for location permissions
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            fetchCurrentLocation(fusedLocationClient, viewModel)
+        }
+    }
+
+    // Effect to check and request location when screen is opened
+    LaunchedEffect(Unit) {
+        val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        
+        if (fineGranted || coarseGranted) {
+            fetchCurrentLocation(fusedLocationClient, viewModel)
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
+        }
+    }
 
     if (uiState.success) {
         ModernLoanSuccessDialog(onDismiss = onBack)
@@ -106,7 +143,6 @@ fun LoanApplicationScreen(
                                     exit = fadeOut() + shrinkVertically()
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                                        // Form Section
                                         LoanInputSection(
                                             amount = uiState.amountInput,
                                             onAmountChange = viewModel::onAmountChanged,
@@ -119,7 +155,6 @@ fun LoanApplicationScreen(
                                             currencyFormatter = currencyFormatter
                                         )
 
-                                        // Simulation Section
                                         if (uiState.simulation != null) {
                                             ModernSimulationCard(
                                                 simulation = uiState.simulation!!,
@@ -152,7 +187,6 @@ fun LoanApplicationScreen(
                     }
                 }
 
-                // Sticky Bottom Button
                 Surface(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -181,6 +215,19 @@ fun LoanApplicationScreen(
             }
         }
     }
+}
+
+@SuppressLint("MissingPermission")
+private fun fetchCurrentLocation(
+    fusedLocationClient: FusedLocationProviderClient,
+    viewModel: LoanViewModel
+) {
+    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+        .addOnSuccessListener { location ->
+            location?.let {
+                viewModel.updateLocation(it.latitude, it.longitude)
+            }
+        }
 }
 
 @Composable
