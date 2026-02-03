@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.domain.model.Loan
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -413,6 +414,29 @@ fun LoanDetailContent(
     currencyFormatter: NumberFormat,
     onClose: () -> Unit
 ) {
+    val formattedDate = remember(loan.date) {
+        if (loan.date != null) {
+            try {
+                // Mencoba memparsing format standar ISO dari backend atau format lokal yang disimpan
+                val inputFormat = if (loan.date.contains("T")) {
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                } else {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                }
+                val date = inputFormat.parse(loan.date)
+                if (date != null) {
+                    SimpleDateFormat("d MMMM yyyy", Locale("id", "ID")).format(date)
+                } else {
+                    loan.date
+                }
+            } catch (e: Exception) {
+                loan.date
+            }
+        } else {
+            "-"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -443,7 +467,7 @@ fun LoanDetailContent(
                 DetailRow("Jumlah Pinjaman", currencyFormatter.format(loan.amount))
                 DetailRow("Tenor", "${loan.tenorMonths} Bulan")
                 DetailRow("Suku Bunga", "${loan.interestRate ?: 0.0}%")
-                DetailRow("Tanggal Pengajuan", loan.date ?: "-")
+                DetailRow("Tanggal Pengajuan", formattedDate)
                 DetailRow("Status", loan.status.uppercase(), color = getStatusColor(loan.status).second)
             }
         }

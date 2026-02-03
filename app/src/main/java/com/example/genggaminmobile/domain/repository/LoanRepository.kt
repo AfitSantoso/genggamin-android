@@ -10,6 +10,7 @@ interface LoanRepository {
         tenor: Int,
         purpose: String,
         plafondId: Long,
+        interestRate: Double,
         latitude: Double,
         longitude: Double
     ): Result<Unit>

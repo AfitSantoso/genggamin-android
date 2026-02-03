@@ -62,6 +62,7 @@ class LoanRepositoryImpl @Inject constructor(
         tenor: Int,
         purpose: String,
         plafondId: Long,
+        interestRate: Double,
         latitude: Double,
         longitude: Double
     ): Result<Unit> {
@@ -72,7 +73,7 @@ class LoanRepositoryImpl @Inject constructor(
             purpose = purpose,
             plafondId = plafondId,
             status = "PENDING (Offline)",
-            interestRate = null,
+            interestRate = interestRate,
             date = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
         )
 
