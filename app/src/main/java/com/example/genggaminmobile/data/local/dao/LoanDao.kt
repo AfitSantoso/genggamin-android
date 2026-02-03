@@ -27,6 +27,12 @@ interface LoanDao {
     @Query("DELETE FROM loans")
     suspend fun clearLoans()
 
+    @Query("SELECT * FROM loans WHERE localId = :localId")
+    suspend fun getLoanByLocalId(localId: Long): LoanEntity?
+
+    @Query("DELETE FROM loans WHERE localId = :localId")
+    suspend fun deleteByLocalId(localId: Long)
+
     @Query("DELETE FROM loans WHERE isSynced = 1")
     suspend fun deleteSyncedLoans()
 }

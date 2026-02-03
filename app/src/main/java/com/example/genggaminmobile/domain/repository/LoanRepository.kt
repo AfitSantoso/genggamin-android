@@ -10,6 +10,7 @@ interface LoanRepository {
         tenor: Int,
         purpose: String,
         plafondId: Long,
+        interestRate: Double,
         latitude: Double,
         longitude: Double
     ): Result<Unit>
@@ -18,4 +19,5 @@ interface LoanRepository {
     suspend fun getMyLimits(): Result<List<LoanLimit>>
     fun getLimitsFlow(): Flow<List<LoanLimit>>
     suspend fun syncUnsyncedLoans(): Result<Unit>
+    suspend fun cancelLoan(loanId: Long): Result<Unit>
 }

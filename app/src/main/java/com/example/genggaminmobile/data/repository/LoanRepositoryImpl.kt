@@ -62,6 +62,7 @@ class LoanRepositoryImpl @Inject constructor(
         tenor: Int,
         purpose: String,
         plafondId: Long,
+        interestRate: Double,
         latitude: Double,
         longitude: Double
     ): Result<Unit> {
@@ -72,7 +73,7 @@ class LoanRepositoryImpl @Inject constructor(
             purpose = purpose,
             plafondId = plafondId,
             status = "PENDING (Offline)",
-            interestRate = null,
+            interestRate = interestRate,
             date = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())
         )
 
@@ -220,5 +221,29 @@ class LoanRepositoryImpl @Inject constructor(
             }
         }
         return if (allSuccess) Result.success(Unit) else Result.failure(Exception("Failed to sync some loans"))
+    }
+
+    override suspend fun cancelLoan(loanId: Long): Result<Unit> {
+        return try {
+            val loan = loanDao.getLoanByLocalId(loanId) ?: return Result.failure(Exception("Loan not found"))
+            
+            if (loan.status == "PENDING (Offline)") {
+                // Restore limit
+                val limitEntity = loanLimitDao.getLimitByPlafondId(loan.plafondId)
+                if (limitEntity != null) {
+                    val newAvailable = limitEntity.availableLimit + loan.amount
+                    // Ensure available does not exceed total (though logic implies it creates 'used', so restoring should be fine unless total changed)
+                    val safeAvailable = if (newAvailable > limitEntity.totalLimit) limitEntity.totalLimit else newAvailable
+                    loanLimitDao.updateLimit(limitEntity.copy(availableLimit = safeAvailable))
+                }
+                
+                loanDao.deleteByLocalId(loanId)
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Cannot cancel this loan. Status is ${loan.status}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

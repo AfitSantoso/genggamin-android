@@ -183,6 +183,7 @@ class LoanViewModel @Inject constructor(
                 tenor = tenor,
                 purpose = state.purposeInput,
                 plafondId = state.selectedPlafond.id.toLong(),
+                interestRate = state.selectedPlafond.interestRate,
                 latitude = state.latitude,
                 longitude = state.longitude
             ).fold(
