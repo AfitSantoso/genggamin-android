@@ -91,4 +91,16 @@ class LoanHistoryViewModel @Inject constructor(
 
         _uiState.update { it.copy(filteredLoans = filtered) }
     }
+
+    fun cancelLoan(loanId: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = loanRepository.cancelLoan(loanId)
+            // Note: DB update triggers flow emission in loadLoans, updating the list automatically.
+            if (result.isFailure) {
+                _uiState.update { it.copy(error = result.exceptionOrNull()?.message ?: "Gagal membatalkan pengajuan") }
+            }
+            _uiState.update { it.copy(isLoading = false) }
+        }
+    }
 }

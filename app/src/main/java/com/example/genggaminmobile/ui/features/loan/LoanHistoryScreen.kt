@@ -147,7 +147,11 @@ fun LoanHistoryScreen(
             LoanDetailContent(
                 loan = selectedLoan!!,
                 currencyFormatter = currencyFormatter,
-                onClose = { showDetailSheet = false }
+                onClose = { showDetailSheet = false },
+                onCancel = { id -> 
+                    viewModel.cancelLoan(id)
+                    showDetailSheet = false
+                }
             )
         }
     }
@@ -411,7 +415,8 @@ fun ModernLoanItem(loan: Loan, currencyFormatter: NumberFormat, modifier: Modifi
 fun LoanDetailContent(
     loan: Loan,
     currencyFormatter: NumberFormat,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onCancel: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -443,7 +448,7 @@ fun LoanDetailContent(
                 DetailRow("Jumlah Pinjaman", currencyFormatter.format(loan.amount))
                 DetailRow("Tenor", "${loan.tenorMonths} Bulan")
                 DetailRow("Suku Bunga", "${loan.interestRate ?: 0.0}%")
-                DetailRow("Tanggal Pengajuan", loan.date ?: "-")
+                DetailRow("Tanggal Pengajuan", formatDate(loan.date))
                 DetailRow("Status", loan.status.uppercase(), color = getStatusColor(loan.status).second)
             }
         }
@@ -456,6 +461,24 @@ fun LoanDetailContent(
             shape = RoundedCornerShape(16.dp)
         ) {
             Text("Tutup")
+        }
+        
+        if (loan.status == "PENDING (Offline)" && loan.id != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { onCancel(loan.id) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                    containerColor = Color.Transparent
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.Outlined.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Batalkan Pengajuan")
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -601,4 +624,16 @@ fun getStatusIcon(status: String): ImageVector = when (status.lowercase()) {
     "submitted", "pending", "menunggu", "under_review" -> Icons.Default.Schedule
     "rejected", "ditolak" -> Icons.Default.Cancel
     else -> Icons.Default.HelpOutline
+}
+
+fun formatDate(dateString: String?): String {
+    if (dateString.isNullOrEmpty()) return "-"
+    return try {
+        val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        val outputFormat = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale("id", "ID"))
+        outputFormat.format(date!!)
+    } catch (e: Exception) {
+        dateString 
+    }
 }
