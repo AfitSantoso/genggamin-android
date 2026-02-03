@@ -155,8 +155,8 @@ class LoanViewModel @Inject constructor(
             return
         }
 
-        if (amount <= 0 || amount > state.selectedPlafond.maxAmount) {
-            _uiState.value = state.copy(error = "Jumlah pinjaman tidak valid")
+        if (amount < 400000 || amount > state.selectedPlafond.maxAmount) {
+            _uiState.value = state.copy(error = "Minimal pengajuan pinjaman adalah Rp 400.000 dan maksimal sesuai limit")
             return
         }
 

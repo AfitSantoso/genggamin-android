@@ -411,13 +411,13 @@ fun LoanInputSection(
             }
 
             ModernLoanTextField(
-                value = amount,
+                value = formatCurrencyInput(amount),
                 onValueChange = onAmountChange,
                 label = "Jumlah Pinjaman",
                 icon = Icons.Outlined.Payments,
                 keyboardType = KeyboardType.Number,
                 prefix = "Rp ",
-                supportingText = "Batas tersedia: ${currencyFormatter.format(selectedLimit?.availableLimit ?: selectedPlafond.maxAmount)}"
+                supportingText = "Min: Rp 400.000, Max: ${currencyFormatter.format(selectedLimit?.availableLimit ?: selectedPlafond.maxAmount)}"
             )
 
             ModernLoanTextField(
@@ -651,4 +651,15 @@ fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp
     )
+}
+
+fun formatCurrencyInput(input: String): String {
+    val digits = input.filter { it.isDigit() }
+    if (digits.isEmpty()) return ""
+    return try {
+        val parsed = digits.toLong()
+        NumberFormat.getNumberInstance(Locale("id", "ID")).format(parsed)
+    } catch (e: Exception) {
+        digits
+    }
 }

@@ -33,8 +33,8 @@ class CustomerRepositoryImpl @Inject constructor(
         return try {
             val response = customerApi.getProfile()
             if (response.success && response.data != null) {
-                // Save to DB
-                saveProfileToDb(response.data)
+                // Save to DB (don't force download if already cached)
+                saveProfileToDb(response.data, forceDownload = false)
                 Result.success(response.data)
             } else {
                 Result.failure(Exception(response.message))
@@ -57,11 +57,11 @@ class CustomerRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun saveProfileToDb(data: CustomerProfileResponse) {
+    private suspend fun saveProfileToDb(data: CustomerProfileResponse, forceDownload: Boolean) {
         // Download images in background
-        val localKtp = data.ktpImagePath?.let { downloadAndCacheImage(it, "ktp_${data.id}.jpg") }
-        val localSelfie = data.selfieImagePath?.let { downloadAndCacheImage(it, "selfie_${data.id}.jpg") }
-        val localPayslip = data.payslipImagePath?.let { downloadAndCacheImage(it, "payslip_${data.id}.jpg") }
+        val localKtp = data.ktpImagePath?.let { downloadAndCacheImage(it, "ktp_${data.id}.jpg", forceDownload) }
+        val localSelfie = data.selfieImagePath?.let { downloadAndCacheImage(it, "selfie_${data.id}.jpg", forceDownload) }
+        val localPayslip = data.payslipImagePath?.let { downloadAndCacheImage(it, "payslip_${data.id}.jpg", forceDownload) }
 
         val entity = ProfileEntity(
             id = data.id,
@@ -148,6 +148,8 @@ class CustomerRepositoryImpl @Inject constructor(
             val response = customerApi.createOrUpdateProfile(dataPart, ktpPart, selfiePart, payslipPart)
             
             if (response.success && response.data != null) {
+                // Update local DB after success, FORCE download new images
+                saveProfileToDb(response.data, forceDownload = true)
                 Result.success(response.data)
             } else {
                 Result.failure(Exception(response.message))
@@ -155,16 +157,11 @@ class CustomerRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
              // Save pending update
              savePendingUpdate(data, ktp, selfie, payslip)
-             // Return "fake" success or special error? 
-             // Ideally we should return a state saying "pending", but for now let's assume UI handles success as "saved".
-             // We can return the local data as "response" to update UI immediately.
              val pendingResponse = createFakeResponseFromRequest(data)
              Result.success(pendingResponse)
         } catch (e: Exception) {
              savePendingUpdate(data, ktp, selfie, payslip)
-             // Schedule immediate sync
              scheduleImmediateSync()
-
              val pendingResponse = createFakeResponseFromRequest(data)
              Result.success(pendingResponse)
         }
@@ -244,11 +241,6 @@ class CustomerRepositoryImpl @Inject constructor(
             val selfie = pending.selfiePath?.let { File(it) }
             val payslip = pending.payslipPath?.let { File(it) }
 
-            // Ensure files exist before sending (if user cleared cache they might be gone)
-            // But we try anyway or skip? If file missing, maybe send null?
-            // Sending null might fail backend validation if required.
-            // For now assume files persist.
-            
             val jsonString = gson.toJson(data)
             val dataPart = jsonString.toRequestBody("application/json".toMediaTypeOrNull())
 
@@ -264,7 +256,8 @@ class CustomerRepositoryImpl @Inject constructor(
 
             val response = customerApi.createOrUpdateProfile(dataPart, ktpPart, selfiePart, payslipPart)
             
-            if (response.success) {
+            if (response.success && response.data != null) {
+                saveProfileToDb(response.data, forceDownload = true)
                 profileDao.clearPendingUpdate()
                 Result.success(Unit)
             } else {
@@ -320,14 +313,14 @@ class CustomerRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun downloadAndCacheImage(url: String, filename: String): String? {
-        // Simple download using basic URL storage or OkHttp if available
-        // Since we are inside Repo, we can use simple URL connection or OkHttp
-        // Assume context.filesDir is available
+    private suspend fun downloadAndCacheImage(url: String, filename: String, force: Boolean): String? {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val file = File(context.filesDir, filename)
-                if (file.exists() && file.length() > 0) return@withContext file.absolutePath
+                // If it's a local path already, just return it
+                if (url.startsWith("/")) return@withContext url
+                
+                if (!force && file.exists() && file.length() > 0) return@withContext file.absolutePath
 
                 val finalUrl = if (url.startsWith("http")) url else "http://10.0.2.2:8080$url" // Fallback IP for emulator
 
@@ -339,6 +332,7 @@ class CustomerRepositoryImpl @Inject constructor(
                     val bytes = response.body?.bytes()
                     if (bytes != null) {
                         file.writeBytes(bytes)
+                        Log.d("CustomerRepo", "Downloaded and cached: $filename")
                         return@withContext file.absolutePath
                     }
                 }

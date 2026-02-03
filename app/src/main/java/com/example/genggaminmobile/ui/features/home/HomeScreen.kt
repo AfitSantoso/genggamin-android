@@ -64,11 +64,19 @@ fun HomeScreen(
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
 
     // Scaffold removed, LazyColumn wraps content directly
+    val insets = WindowInsets.systemBars.asPaddingValues()
+    
+    // Scaffold removed, LazyColumn wraps content directly
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(
+            top = 16.dp + insets.calculateTopPadding(),
+            bottom = 0.dp,
+            start = 16.dp,
+            end = 16.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
             // Header

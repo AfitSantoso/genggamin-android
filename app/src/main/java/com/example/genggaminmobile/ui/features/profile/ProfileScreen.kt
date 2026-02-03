@@ -81,7 +81,9 @@ fun ProfileScreen(
         2 -> income.isNotEmpty() && occupation.isNotEmpty() && currentAddress.isNotEmpty() && motherName.isNotEmpty()
         3 -> bankAccount.isNotEmpty() && bankHolder.isNotEmpty()
         4 -> emergencyName.isNotEmpty() && emergencyRelation.isNotEmpty() && emergencyPhone.isNotEmpty()
-        5 -> ktpFile != null && selfieFile != null && payslipFile != null
+        5 -> (ktpFile != null || !uiState.profile?.ktpImagePath.isNullOrEmpty()) && 
+             (selfieFile != null || !uiState.profile?.selfieImagePath.isNullOrEmpty()) && 
+             (payslipFile != null || !uiState.profile?.payslipImagePath.isNullOrEmpty())
         else -> false
     }
 
@@ -92,7 +94,7 @@ fun ProfileScreen(
             pob = p.placeOfBirth
             address = p.address
             phone = p.customerPhone
-            income = p.monthlyIncome.toString()
+            income = formatCurrencyInput(p.monthlyIncome.toString())
             occupation = p.occupation
             currentAddress = p.currentAddress
             motherName = p.motherMaidenName
@@ -138,7 +140,8 @@ fun ProfileScreen(
                 )
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Box(
             modifier = Modifier
@@ -196,13 +199,15 @@ fun ProfileScreen(
                                 item {
                                     when (uiState.currentStep) {
                                         1 -> PersonalDataStep(nik, { nik = it }, dob, { dob = it }, pob, { pob = it }, address, { address = it }, phone, { phone = it })
-                                        2 -> FinancialDataStep(income, { income = it }, occupation, { occupation = it }, currentAddress, { currentAddress = it }, motherName, { motherName = it })
+                                        2 -> FinancialDataStep(income, { income = formatCurrencyInput(it) }, occupation, { occupation = it }, currentAddress, { currentAddress = it }, motherName, { motherName = it })
                                         3 -> BankDataStep(bankAccount, { bankAccount = it }, bankHolder, { bankHolder = it })
                                         4 -> EmergencyContactStep(emergencyName, { emergencyName = it }, emergencyRelation, { emergencyRelation = it }, emergencyPhone, { emergencyPhone = it })
                                         5 -> DocumentUploadStep(
                                             ktpFile, { ktpFile = it },
                                             selfieFile, { selfieFile = it },
-                                            payslipFile, { payslipFile = it }
+                                            payslipFile, { payslipFile = it },
+                                            existingProfile = uiState.profile,
+                                            lastUpdated = uiState.lastUpdated
                                         )
                                     }
                                 }
@@ -238,7 +243,7 @@ fun ProfileScreen(
                                             } else {
                                                 val request = CustomerProfileRequest(
                                                     nik = nik, dateOfBirth = dob, placeOfBirth = pob,
-                                                    address = address, phone = phone, monthlyIncome = income.toLongOrNull() ?: 0L,
+                                                    address = address, phone = phone, monthlyIncome = income.replace(".", "").toLongOrNull() ?: 0L,
                                                     occupation = occupation, currentAddress = currentAddress,
                                                     motherMaidenName = motherName, accountNumber = bankAccount,
                                                     accountHolderName = bankHolder,
@@ -558,11 +563,23 @@ fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, on
         ModernTextField(value = nik, onValueChange = onNikChange, label = "NIK (Wajib 16 Digit)", icon = Icons.Outlined.Badge, keyboardType = KeyboardType.Number)
         
         // Date of Birth with DatePicker
+        val calendar = java.util.Calendar.getInstance()
+        calendar.add(java.util.Calendar.YEAR, -18)
+        val maxDate = calendar.timeInMillis
+        
         ModernDatePickerField(
             value = dob,
             onValueChange = onDobChange,
             label = "Tanggal Lahir",
-            icon = Icons.Outlined.CalendarMonth
+            icon = Icons.Outlined.CalendarMonth,
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis <= maxDate
+                }
+                override fun isSelectableYear(year: Int): Boolean {
+                    return year <= calendar.get(java.util.Calendar.YEAR)
+                }
+            }
         )
         
         ModernTextField(value = pob, onValueChange = onPobChange, label = "Tempat Lahir", icon = Icons.Outlined.Place)
@@ -577,10 +594,11 @@ fun ModernDatePickerField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    icon: ImageVector
+    icon: ImageVector,
+    selectableDates: SelectableDates = DatePickerDefaults.AllDates
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(selectableDates = selectableDates)
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -641,7 +659,7 @@ fun ModernDatePickerField(
 fun FinancialDataStep(income: String, onIncomeChange: (String) -> Unit, occupation: String, onOccupationChange: (String) -> Unit, currentAddress: String, onCurrentAddressChange: (String) -> Unit, motherName: String, onMotherNameChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(value = income, onValueChange = onIncomeChange, label = "Pendapatan Per Bulan", icon = Icons.Outlined.Payments, keyboardType = KeyboardType.Number, prefix = "Rp ")
-        ModernTextField(value = occupation, onValueChange = onOccupationChange, label = "Pekerjaan", icon = Icons.Outlined.WorkOutline)
+        OccupationInput(value = occupation, onValueChange = onOccupationChange)
         ModernTextField(value = motherName, onValueChange = onMotherNameChange, label = "Nama Ibu Kandung", icon = Icons.Outlined.Face)
         ModernTextField(value = currentAddress, onValueChange = onCurrentAddressChange, label = "Alamat Tinggal Sekarang", icon = Icons.Outlined.LocationOn, singleLine = false, minLines = 2)
     }
@@ -668,7 +686,9 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
 fun DocumentUploadStep(
     ktp: File?, onKtpSelect: (File) -> Unit,
     selfie: File?, onSelfieSelect: (File) -> Unit,
-    payslip: File?, onPayslipSelect: (File) -> Unit
+    payslip: File?, onPayslipSelect: (File) -> Unit,
+    existingProfile: com.example.genggaminmobile.data.model.dto.CustomerProfileResponse? = null,
+    lastUpdated: Long = 0
 ) {
     val context = LocalContext.current
     var showSheetForKtp by remember { mutableStateOf(false) }
@@ -725,9 +745,27 @@ fun DocumentUploadStep(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernUploadItem("Foto KTP", ktp != null, onClick = { showSheetForKtp = true })
-        ModernUploadItem("Foto Selfie + KTP", selfie != null, onClick = { showSheetForSelfie = true })
-        ModernUploadItem("Foto Slip Gaji", payslip != null, onClick = { showSheetForPayslip = true })
+        ModernUploadItem(
+            label = "Foto KTP", 
+            isUploaded = ktp != null || !existingProfile?.ktpImagePath.isNullOrEmpty(),
+            previewPath = ktp?.absolutePath ?: existingProfile?.ktpImagePath,
+            lastUpdated = lastUpdated,
+            onClick = { showSheetForKtp = true }
+        )
+        ModernUploadItem(
+            label = "Foto Selfie + KTP", 
+            isUploaded = selfie != null || !existingProfile?.selfieImagePath.isNullOrEmpty(),
+            previewPath = selfie?.absolutePath ?: existingProfile?.selfieImagePath,
+            lastUpdated = lastUpdated,
+            onClick = { showSheetForSelfie = true }
+        )
+        ModernUploadItem(
+            label = "Foto Slip Gaji", 
+            isUploaded = payslip != null || !existingProfile?.payslipImagePath.isNullOrEmpty(),
+            previewPath = payslip?.absolutePath ?: existingProfile?.payslipImagePath,
+            lastUpdated = lastUpdated,
+            onClick = { showSheetForPayslip = true }
+        )
     }
 
     if (showSheetForKtp) ImagePickerSheet(
@@ -781,29 +819,61 @@ fun uriToFile(context: Context, uri: Uri): File {
 }
 
 @Composable
-fun ModernUploadItem(label: String, isUploaded: Boolean, onClick: () -> Unit) {
+fun ModernUploadItem(
+    label: String, 
+    isUploaded: Boolean, 
+    previewPath: String? = null,
+    lastUpdated: Long = 0,
+    onClick: () -> Unit
+) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(90.dp),
+        modifier = Modifier.fillMaxWidth().height(100.dp),
         shape = RoundedCornerShape(20.dp),
         color = if (isUploaded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
     ) {
-        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier.size(48.dp).clip(CircleShape).background(if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant),
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = if (isUploaded) Icons.Default.Check else Icons.Outlined.FileUpload,
-                    contentDescription = null,
-                    tint = if (isUploaded) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (!previewPath.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(if (previewPath.startsWith("/")) File(previewPath) else previewPath)
+                            .memoryCacheKey("$previewPath-$lastUpdated")
+                            .build(),
+                        contentDescription = label,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    // Overlay check icon for better UX
+                    Box(
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                    }
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.FileUpload,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
-                Text(if (isUploaded) "Dokumen terpilih" else "Ketuk untuk unggah", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    text = if (isUploaded) "Dokumen sudah tersedia" else "Ketuk untuk unggah", 
+                    style = MaterialTheme.typography.bodySmall, 
+                    color = if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -846,4 +916,121 @@ fun getStepTitle(step: Int) = when(step) {
     4 -> "Kontak Darurat"
     5 -> "Verifikasi Dokumen"
     else -> ""
+}
+
+@Composable
+fun OccupationInput(
+    value: String,
+    onValueChange: (String) -> Unit
+) {
+    val options = listOf(
+        "Karyawan Swasta Tetap",
+        "Karyawan Swasta Kontrak",
+        "PNS / Pegawai Pemerintah",
+        "Wiraswasta / UMKM",
+        "Profesional (Dokter, Akuntan, dll)",
+        "Freelancer / Driver Online",
+        "Pensiunan",
+        "Lainnya"
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+    var internalManualMode by remember { mutableStateOf(false) }
+
+    LaunchedEffect(value) {
+        if (value.isNotEmpty() && !options.contains(value)) {
+            internalManualMode = true
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        if (internalManualMode) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text("Pekerjaan (Lainnya)") },
+                leadingIcon = { Icon(Icons.Outlined.WorkOutline, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                trailingIcon = {
+                    IconButton(onClick = {
+                        internalManualMode = false
+                        onValueChange("")
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = "Batal", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+        } else {
+            // Dropdown Mode
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Pekerjaan") },
+                leadingIcon = { Icon(Icons.Outlined.WorkOutline, null, modifier = Modifier.size(20.dp)) },
+                trailingIcon = {
+                    Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(24.dp))
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                enabled = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                shape = RoundedCornerShape(16.dp)
+            )
+
+            // Overlay for click
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { expanded = true }
+            )
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            expanded = false
+                            if (option == "Lainnya") {
+                                internalManualMode = true
+                                onValueChange("")
+                            } else {
+                                internalManualMode = false
+                                onValueChange(option)
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+fun formatCurrencyInput(input: String): String {
+    val digits = input.filter { it.isDigit() }
+    if (digits.isEmpty()) return ""
+    return try {
+        val parsed = digits.toLong()
+        NumberFormat.getNumberInstance(Locale("id", "ID")).format(parsed)
+    } catch (e: Exception) {
+        digits
+    }
 }
