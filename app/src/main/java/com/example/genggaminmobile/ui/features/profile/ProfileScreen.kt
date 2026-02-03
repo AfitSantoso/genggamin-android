@@ -580,7 +580,23 @@ fun ModernDatePickerField(
     icon: ImageVector
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    
+    // Set restriction: minimum 18 years old
+    val calendar = Calendar.getInstance()
+    calendar.add(Calendar.YEAR, -18)
+    val maxDateMillis = calendar.timeInMillis
+
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis <= maxDateMillis
+            }
+            override fun isSelectableYear(year: Int): Boolean {
+                return year <= calendar.get(Calendar.YEAR)
+            }
+        }
+    )
+
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -639,9 +655,28 @@ fun ModernDatePickerField(
 
 @Composable
 fun FinancialDataStep(income: String, onIncomeChange: (String) -> Unit, occupation: String, onOccupationChange: (String) -> Unit, currentAddress: String, onCurrentAddressChange: (String) -> Unit, motherName: String, onMotherNameChange: (String) -> Unit) {
+    val occupationOptions = listOf(
+        "Karyawan Swasta Tetap",
+        "Karyawan Swasta Kontrak",
+        "PNS / Pegawai Pemerintah",
+        "Wiraswasta / UMKM",
+        "Profesional (Dokter, Akuntan, dll)",
+        "Freelancer / Driver Online",
+        "Pensiunan",
+        "Lainnya"
+    )
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(value = income, onValueChange = onIncomeChange, label = "Pendapatan Per Bulan", icon = Icons.Outlined.Payments, keyboardType = KeyboardType.Number, prefix = "Rp ")
-        ModernTextField(value = occupation, onValueChange = onOccupationChange, label = "Pekerjaan", icon = Icons.Outlined.WorkOutline)
+        
+        ModernDropdownInputField(
+            value = occupation,
+            onValueChange = onOccupationChange,
+            label = "Pekerjaan",
+            icon = Icons.Outlined.WorkOutline,
+            options = occupationOptions
+        )
+
         ModernTextField(value = motherName, onValueChange = onMotherNameChange, label = "Nama Ibu Kandung", icon = Icons.Outlined.Face)
         ModernTextField(value = currentAddress, onValueChange = onCurrentAddressChange, label = "Alamat Tinggal Sekarang", icon = Icons.Outlined.LocationOn, singleLine = false, minLines = 2)
     }
@@ -661,6 +696,37 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
         ModernTextField(value = name, onValueChange = onNameChange, label = "Nama Kontak Darurat", icon = Icons.Outlined.AccountCircle)
         ModernTextField(value = relation, onValueChange = onRelationChange, label = "Hubungan", icon = Icons.Outlined.People)
         ModernTextField(value = phone, onValueChange = onPhoneChange, label = "Nomor Telepon", icon = Icons.Outlined.Call, keyboardType = KeyboardType.Phone)
+    }
+}
+
+@Composable
+fun UploadPreview(file: File?) {
+    AnimatedVisibility(
+        visible = file != null,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        file?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .padding(top = 8.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(it)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Preview",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
     }
 }
 
@@ -725,9 +791,18 @@ fun DocumentUploadStep(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernUploadItem("Foto KTP", ktp != null, onClick = { showSheetForKtp = true })
-        ModernUploadItem("Foto Selfie + KTP", selfie != null, onClick = { showSheetForSelfie = true })
-        ModernUploadItem("Foto Slip Gaji", payslip != null, onClick = { showSheetForPayslip = true })
+        Column {
+            ModernUploadItem("Foto KTP", ktp != null, onClick = { showSheetForKtp = true })
+            UploadPreview(file = ktp)
+        }
+        Column {
+            ModernUploadItem("Foto Selfie + KTP", selfie != null, onClick = { showSheetForSelfie = true })
+            UploadPreview(file = selfie)
+        }
+        Column {
+            ModernUploadItem("Foto Slip Gaji", payslip != null, onClick = { showSheetForPayslip = true })
+            UploadPreview(file = payslip)
+        }
     }
 
     if (showSheetForKtp) ImagePickerSheet(
@@ -805,6 +880,86 @@ fun ModernUploadItem(label: String, isUploaded: Boolean, onClick: () -> Unit) {
                 Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                 Text(if (isUploaded) "Dokumen terpilih" else "Ketuk untuk unggah", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ModernDropdownInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: ImageVector,
+    options: List<String>
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val isCustom = value.isNotEmpty() && value !in options
+    val displayValue = if (isCustom) "Lainnya" else value
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = displayValue,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text(label) },
+                leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            if (option == "Lainnya") {
+                                onValueChange("Lainnya")
+                            } else {
+                                onValueChange(option)
+                            }
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        AnimatedVisibility(
+            visible = displayValue == "Lainnya" || value == "Lainnya",
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            val inputValue = if (value == "Lainnya") "" else value
+            ModernTextField(
+                value = inputValue,
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty()) {
+                        onValueChange("Lainnya")
+                    } else {
+                        onValueChange(newValue)
+                    }
+                },
+                label = "Sebutkan Pekerjaan Anda",
+                icon = Icons.Outlined.Edit,
+                singleLine = true
+            )
         }
     }
 }
