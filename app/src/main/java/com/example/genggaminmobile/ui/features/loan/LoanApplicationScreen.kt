@@ -96,7 +96,8 @@ fun LoanApplicationScreen(
                     containerColor = Color.Transparent
                 )
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.statusBars
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isLoading && uiState.plafonds.isEmpty()) {

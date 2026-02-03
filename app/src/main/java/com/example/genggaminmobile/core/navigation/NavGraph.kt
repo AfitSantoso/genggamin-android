@@ -214,6 +214,7 @@ fun ModernNavigationBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding() // Push up above gesture/nav bar
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
