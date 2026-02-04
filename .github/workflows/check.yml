@@ -7,8 +7,8 @@ on:
     branches: [ "ver2" ]
 
 jobs:
-  spotless:
-    name: Spotless Check
+  check:
+    name: Lint & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -26,3 +26,6 @@ jobs:
 
       - name: Run Spotless Check
         run: ./gradlew spotlessCheck
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest

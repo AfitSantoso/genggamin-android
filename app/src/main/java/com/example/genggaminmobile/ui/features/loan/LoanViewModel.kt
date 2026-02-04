@@ -3,22 +3,17 @@ package com.example.genggaminmobile.ui.features.loan
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.genggaminmobile.domain.model.LoanLimit
+import com.example.genggaminmobile.domain.model.LoanSimulation
 import com.example.genggaminmobile.domain.model.Plafond
 import com.example.genggaminmobile.domain.repository.LoanRepository
 import com.example.genggaminmobile.domain.repository.PlafondRepository
+import com.example.genggaminmobile.domain.util.LoanCalculator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class LoanSimulation(
-    val monthlyInstallment: Long = 0,
-    val totalInterest: Long = 0,
-    val totalRepayment: Long = 0,
-    val interestRate: Double = 0.0,
-)
 
 data class LoanApplicationUiState(
     val isLoading: Boolean = false,
@@ -119,25 +114,8 @@ class LoanViewModel @Inject constructor(
         val amount = state.amountInput.toLongOrNull() ?: 0L
         val tenor = state.tenorInput.toIntOrNull() ?: 0
 
-        if (amount > 0 && tenor > 0) {
-            val monthlyInterestRatePercent = plafond.interestRate
-            val totalInterestPercent = monthlyInterestRatePercent * tenor
-
-            val totalInterest = (amount * (totalInterestPercent / 100.0)).toLong()
-            val totalRepayment = amount + totalInterest
-            val monthlyInstallment = totalRepayment / tenor
-
-            _uiState.value = _uiState.value.copy(
-                simulation = LoanSimulation(
-                    monthlyInstallment = monthlyInstallment,
-                    totalInterest = totalInterest,
-                    totalRepayment = totalRepayment,
-                    interestRate = plafond.interestRate,
-                ),
-            )
-        } else {
-            _uiState.value = _uiState.value.copy(simulation = null)
-        }
+        val simulation = LoanCalculator().calculateSimulation(amount, tenor, plafond)
+        _uiState.value = _uiState.value.copy(simulation = simulation)
     }
 
     fun onPurposeChanged(purpose: String) {

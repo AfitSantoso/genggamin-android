@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.domain.model.LoanLimit
+import com.example.genggaminmobile.domain.model.LoanSimulation
 import com.example.genggaminmobile.domain.model.Plafond
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
