@@ -16,8 +16,10 @@ import javax.inject.Singleton
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
 @Singleton
-class PreferencesManager @Inject constructor(
-    @ApplicationContext private val context: Context
+class PreferencesManager
+@Inject
+constructor(
+    @ApplicationContext private val context: Context,
 ) {
     companion object {
         private val AUTH_TOKEN = stringPreferencesKey("auth_token")
@@ -25,15 +27,17 @@ class PreferencesManager @Inject constructor(
         const val SESSION_TIMEOUT = 30 * 60 * 1000L // 30 Minutes
     }
 
-    val authToken: Flow<String?> = context.dataStore.data
-        .map { preferences ->
-            preferences[AUTH_TOKEN]
-        }
+    val authToken: Flow<String?> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[AUTH_TOKEN]
+            }
 
-    val lastLoginTime: Flow<Long> = context.dataStore.data
-        .map { preferences ->
-            preferences[LAST_LOGIN_TIME] ?: 0L
-        }
+    val lastLoginTime: Flow<Long> =
+        context.dataStore.data
+            .map { preferences ->
+                preferences[LAST_LOGIN_TIME] ?: 0L
+            }
 
     suspend fun saveAuthToken(token: String) {
         context.dataStore.edit { preferences ->

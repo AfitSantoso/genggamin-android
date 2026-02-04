@@ -24,13 +24,13 @@ data class ProfileUiState(
     val currentStep: Int = 1,
     val totalSteps: Int = 5,
     val isEditing: Boolean = false,
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
 )
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val customerRepository: CustomerRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -45,20 +45,24 @@ class ProfileViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             customerRepository.getProfile().fold(
                 onSuccess = { profile ->
-                    _uiState.update { it.copy(
-                        profile = profile, 
-                        isLoading = false,
-                        isEditing = false,
-                        lastUpdated = System.currentTimeMillis()
-                    ) }
+                    _uiState.update {
+                        it.copy(
+                            profile = profile,
+                            isLoading = false,
+                            isEditing = false,
+                            lastUpdated = System.currentTimeMillis(),
+                        )
+                    }
                 },
                 onFailure = { error ->
-                    _uiState.update { it.copy(
-                        error = error.message, 
-                        isLoading = false,
-                        isEditing = it.profile == null // Force edit mode if no profile
-                    ) }
-                }
+                    _uiState.update {
+                        it.copy(
+                            error = error.message,
+                            isLoading = false,
+                            isEditing = it.profile == null, // Force edit mode if no profile
+                        )
+                    }
+                },
             )
         }
     }
@@ -74,14 +78,14 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun nextStep() {
-        _uiState.update { 
-            if (it.currentStep < it.totalSteps) it.copy(currentStep = it.currentStep + 1) else it 
+        _uiState.update {
+            if (it.currentStep < it.totalSteps) it.copy(currentStep = it.currentStep + 1) else it
         }
     }
 
     fun previousStep() {
-        _uiState.update { 
-            if (it.currentStep > 1) it.copy(currentStep = it.currentStep - 1) else it 
+        _uiState.update {
+            if (it.currentStep > 1) it.copy(currentStep = it.currentStep - 1) else it
         }
     }
 
@@ -89,23 +93,25 @@ class ProfileViewModel @Inject constructor(
         request: CustomerProfileRequest,
         ktp: File?,
         selfie: File?,
-        payslip: File?
+        payslip: File?,
     ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isSubmitting = true, error = null) }
             customerRepository.createOrUpdateProfile(request, ktp, selfie, payslip).fold(
                 onSuccess = { profile ->
-                    _uiState.update { it.copy(
-                        profile = profile,
-                        isSubmitting = false,
-                        isUpdateSuccess = true,
-                        isEditing = false,
-                        lastUpdated = System.currentTimeMillis()
-                    ) }
+                    _uiState.update {
+                        it.copy(
+                            profile = profile,
+                            isSubmitting = false,
+                            isUpdateSuccess = true,
+                            isEditing = false,
+                            lastUpdated = System.currentTimeMillis(),
+                        )
+                    }
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(error = error.message, isSubmitting = false) }
-                }
+                },
             )
         }
     }
@@ -116,7 +122,7 @@ class ProfileViewModel @Inject constructor(
             onLogoutSuccess()
         }
     }
-    
+
     fun resetUpdateSuccess() {
         _uiState.update { it.copy(isUpdateSuccess = false) }
     }

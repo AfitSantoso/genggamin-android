@@ -19,14 +19,15 @@ data class LoanHistoryUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val selectedFilter: String = "ALL",
-    val isHistoryView: Boolean = false
+    val isHistoryView: Boolean = false,
 )
 
 @HiltViewModel
-class LoanHistoryViewModel @Inject constructor(
-    private val loanRepository: LoanRepository
+class LoanHistoryViewModel
+@Inject
+constructor(
+    private val loanRepository: LoanRepository,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(LoanHistoryUiState())
     val uiState: StateFlow<LoanHistoryUiState> = _uiState.asStateFlow()
 
@@ -37,22 +38,24 @@ class LoanHistoryViewModel @Inject constructor(
     fun loadLoans() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
+
             // Pemicu sinkronisasi data dari API agar database lokal terisi
             loanRepository.refreshLoans()
-            
+
             loanRepository.getMyLoans()
                 .catch { e ->
-                    _uiState.update { it.copy(
-                        error = e.message ?: "Gagal memuat riwayat peminjaman",
-                        isLoading = false
-                    ) }
+                    _uiState.update {
+                        it.copy(
+                            error = e.message ?: "Gagal memuat riwayat peminjaman",
+                            isLoading = false,
+                        )
+                    }
                 }
                 .collect { loans ->
                     _uiState.update { state ->
                         state.copy(
                             allLoans = loans,
-                            isLoading = false
+                            isLoading = false,
                         )
                     }
                     applyFilter(_uiState.value.selectedFilter, _uiState.value.isHistoryView)
@@ -70,24 +73,28 @@ class LoanHistoryViewModel @Inject constructor(
         applyFilter(filter, _uiState.value.isHistoryView)
     }
 
-    private fun applyFilter(filter: String, isHistory: Boolean) {
+    private fun applyFilter(
+        filter: String,
+        isHistory: Boolean,
+    ) {
         val loans = _uiState.value.allLoans
-        
-        val filtered = if (!isHistory) {
-            // Pinjaman Aktif: Semua pinjaman yang tidak ditolak (termasuk yang sedang proses maupun yang sudah cair)
-            loans.filter { 
-                val status = it.status.lowercase()
-                status !in listOf("rejected", "ditolak")
+
+        val filtered =
+            if (!isHistory) {
+                // Pinjaman Aktif: Semua pinjaman yang tidak ditolak (termasuk yang sedang proses maupun yang sudah cair)
+                loans.filter {
+                    val status = it.status.lowercase()
+                    status !in listOf("rejected", "ditolak")
+                }
+            } else {
+                // Riwayat: Semua pinjaman dengan filter
+                when (filter) {
+                    // Filter "Aktif" di Riwayat sekarang merujuk ke pinjaman yang sudah cair/disbursed
+                    "ACTIVE" -> loans.filter { it.status.lowercase() in listOf("disbursed", "cair") }
+                    "REJECTED" -> loans.filter { it.status.lowercase() in listOf("rejected", "ditolak") }
+                    else -> loans // ALL
+                }
             }
-        } else {
-            // Riwayat: Semua pinjaman dengan filter
-            when (filter) {
-                // Filter "Aktif" di Riwayat sekarang merujuk ke pinjaman yang sudah cair/disbursed
-                "ACTIVE" -> loans.filter { it.status.lowercase() in listOf("disbursed", "cair") }
-                "REJECTED" -> loans.filter { it.status.lowercase() in listOf("rejected", "ditolak") }
-                else -> loans // ALL
-            }
-        }
 
         _uiState.update { it.copy(filteredLoans = filtered) }
     }

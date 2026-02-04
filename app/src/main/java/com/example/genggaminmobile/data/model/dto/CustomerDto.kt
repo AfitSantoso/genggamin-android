@@ -6,7 +6,7 @@ data class EmergencyContactDto(
     @SerializedName("id") val id: Int? = null,
     @SerializedName("name", alternate = ["contact_name", "contactName"]) val name: String,
     @SerializedName("relationship") val relationship: String,
-    @SerializedName("phone", alternate = ["contact_phone", "contactPhone"]) val phone: String
+    @SerializedName("phone", alternate = ["contact_phone", "contactPhone"]) val phone: String,
 )
 
 data class CustomerProfileRequest(
@@ -21,7 +21,7 @@ data class CustomerProfileRequest(
     @SerializedName("motherMaidenName") val motherMaidenName: String,
     @SerializedName("accountNumber") val accountNumber: String,
     @SerializedName("accountHolderName") val accountHolderName: String,
-    @SerializedName("emergencyContact") val emergencyContact: EmergencyContactDto
+    @SerializedName("emergencyContact") val emergencyContact: EmergencyContactDto,
 )
 
 data class CustomerProfileResponse(
@@ -45,5 +45,5 @@ data class CustomerProfileResponse(
     @SerializedName("selfieImagePath", alternate = ["selfie_image_path"]) val selfieImagePath: String?,
     @SerializedName("payslipImagePath", alternate = ["payslip_image_path"]) val payslipImagePath: String?,
     @SerializedName("emergencyContacts") val emergencyContacts: List<EmergencyContactDto>,
-    @SerializedName("createdAt") val createdAt: String
+    @SerializedName("createdAt") val createdAt: String,
 )

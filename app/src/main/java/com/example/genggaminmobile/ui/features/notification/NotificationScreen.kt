@@ -22,7 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun NotificationScreen(
     onBack: () -> Unit,
-    viewModel: NotificationViewModel = hiltViewModel()
+    viewModel: NotificationViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -34,9 +34,9 @@ fun NotificationScreen(
                     IconButton(onClick = viewModel::markAllAsRead) {
                         Text(stringResource(com.example.genggaminmobile.R.string.notification_mark_all_read))
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         if (uiState.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -61,7 +61,7 @@ fun NotificationScreen(
 @Composable
 fun NotificationItem(
     notification: com.example.genggaminmobile.domain.model.Notification,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -69,8 +69,8 @@ fun NotificationItem(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
-        )
+            containerColor = if (notification.isRead) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f),
+        ),
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Icon(Icons.Default.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary)

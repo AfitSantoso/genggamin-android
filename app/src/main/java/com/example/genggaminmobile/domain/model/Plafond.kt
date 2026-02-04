@@ -7,5 +7,5 @@ data class Plafond(
     val maxAmount: Long,
     val tenorMonth: Int,
     val interestRate: Double,
-    val isActive: Boolean
+    val isActive: Boolean,
 )

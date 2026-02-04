@@ -5,12 +5,12 @@ import com.google.gson.annotations.SerializedName
 data class LoginRequest(
     @SerializedName("username") val username: String,
     @SerializedName("password") val password: String,
-    @SerializedName("fcmToken") val fcmToken: String? = null
+    @SerializedName("fcmToken") val fcmToken: String? = null,
 )
 
 data class GoogleLoginRequest(
     @SerializedName("idToken") val idToken: String,
-    @SerializedName("fcmToken") val fcmToken: String? = null
+    @SerializedName("fcmToken") val fcmToken: String? = null,
 )
 
 data class LoginResponse(
@@ -18,7 +18,7 @@ data class LoginResponse(
     @SerializedName("username") val username: String,
     @SerializedName("email") val email: String,
     @SerializedName("isActive") val isActive: Boolean,
-    @SerializedName("token") val token: String
+    @SerializedName("token") val token: String,
 )
 
 data class RegisterRequest(
@@ -26,11 +26,11 @@ data class RegisterRequest(
     @SerializedName("password") val password: String,
     @SerializedName("email") val email: String,
     @SerializedName("fullName") val fullName: String,
-    @SerializedName("roles") val roles: List<String>? = null
+    @SerializedName("roles") val roles: List<String>? = null,
 )
 
 data class RegisterResponse(
-    @SerializedName("id") val id: Int
+    @SerializedName("id") val id: Int,
 )
 
 data class UserDto(
@@ -39,18 +39,18 @@ data class UserDto(
     @SerializedName("email") val email: String,
     @SerializedName("fullName") val fullName: String?,
     @SerializedName("isActive") val isActive: Boolean,
-    @SerializedName("roles") val roles: List<String>
+    @SerializedName("roles") val roles: List<String>,
 )
 
 data class ForgotPasswordRequest(
-    @SerializedName("email") val email: String
+    @SerializedName("email") val email: String,
 )
 
 data class ForgotPasswordResponse(
-    @SerializedName("token") val token: String?
+    @SerializedName("token") val token: String?,
 )
 
 data class ResetPasswordRequest(
     @SerializedName("token") val token: String,
-    @SerializedName("newPassword") val newPassword: String
+    @SerializedName("newPassword") val newPassword: String,
 )

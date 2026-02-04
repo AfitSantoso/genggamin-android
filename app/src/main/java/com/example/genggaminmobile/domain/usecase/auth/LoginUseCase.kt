@@ -4,10 +4,16 @@ import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
 import javax.inject.Inject
 
-class LoginUseCase @Inject constructor(
-    private val repository: AuthRepository
+class LoginUseCase
+@Inject
+constructor(
+    private val repository: AuthRepository,
 ) {
-    suspend operator fun invoke(username: String, password: String, fcmToken: String?): Result<User> {
+    suspend operator fun invoke(
+        username: String,
+        password: String,
+        fcmToken: String?,
+    ): Result<User> {
         if (username.isBlank() || password.isBlank()) {
             return Result.failure(Exception("Username and password cannot be empty"))
         }

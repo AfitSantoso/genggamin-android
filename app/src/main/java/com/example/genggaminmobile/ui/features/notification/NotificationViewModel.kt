@@ -14,14 +14,15 @@ import javax.inject.Inject
 data class NotificationUiState(
     val notifications: List<Notification> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
 )
 
 @HiltViewModel
-class NotificationViewModel @Inject constructor(
-    private val notificationRepository: NotificationRepository
+class NotificationViewModel
+@Inject
+constructor(
+    private val notificationRepository: NotificationRepository,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(NotificationUiState())
     val uiState: StateFlow<NotificationUiState> = _uiState.asStateFlow()
 
@@ -34,21 +35,32 @@ class NotificationViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
             notificationRepository.getNotifications().fold(
                 onSuccess = { notifications ->
-                    _uiState.value = _uiState.value.copy(
-                        notifications = notifications,
-                        isLoading = false
-                    )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            notifications = notifications,
+                            isLoading = false,
+                        )
                 },
                 onFailure = { e ->
-                    val mockNotifications = listOf(
-                         Notification(1, "Selamat Datang", "Selamat datang di Genggamin Mobile!", false, "2026-01-27T10:00:00", "INFO", null)
-                    )
-                    _uiState.value = _uiState.value.copy(
-                        notifications = mockNotifications, 
-                        // In real app, we show error. Here fallback to mock if backend fails/empty for demo
-                        isLoading = false
-                    )
-                }
+                    val mockNotifications =
+                        listOf(
+                            Notification(
+                                1,
+                                "Selamat Datang",
+                                "Selamat datang di Genggamin Mobile!",
+                                false,
+                                "2026-01-27T10:00:00",
+                                "INFO",
+                                null,
+                            ),
+                        )
+                    _uiState.value =
+                        _uiState.value.copy(
+                            notifications = mockNotifications,
+                            // In real app, we show error. Here fallback to mock if backend fails/empty for demo
+                            isLoading = false,
+                        )
+                },
             )
         }
     }
@@ -59,9 +71,9 @@ class NotificationViewModel @Inject constructor(
             loadNotifications()
         }
     }
-    
+
     fun markAsRead(id: Long) {
-         viewModelScope.launch {
+        viewModelScope.launch {
             notificationRepository.markAsRead(id)
             loadNotifications()
         }

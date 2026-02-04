@@ -11,11 +11,11 @@ data class PlafondDto(
     @SerializedName("interestRate") val interestRate: Double,
     @SerializedName("isActive") val isActive: Boolean,
     @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("updatedAt") val updatedAt: String
+    @SerializedName("updatedAt") val updatedAt: String,
 )
 
 data class PlafondResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String,
-    @SerializedName("data") val data: List<PlafondDto>
+    @SerializedName("data") val data: List<PlafondDto>,
 )

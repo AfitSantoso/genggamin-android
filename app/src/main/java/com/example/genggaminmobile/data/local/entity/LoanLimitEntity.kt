@@ -11,23 +11,25 @@ data class LoanLimitEntity(
     val plafondTitle: String,
     val totalLimit: Long,
     val availableLimit: Long,
-    val isLocked: Boolean
+    val isLocked: Boolean,
 )
 
-fun LoanLimitEntity.toDomain() = LoanLimit(
-    id = id,
-    plafondId = plafondId,
-    plafondTitle = plafondTitle,
-    totalLimit = totalLimit,
-    availableLimit = availableLimit,
-    isLocked = isLocked
-)
+fun LoanLimitEntity.toDomain() =
+    LoanLimit(
+        id = id,
+        plafondId = plafondId,
+        plafondTitle = plafondTitle,
+        totalLimit = totalLimit,
+        availableLimit = availableLimit,
+        isLocked = isLocked,
+    )
 
-fun LoanLimit.toEntity() = LoanLimitEntity(
-    id = id,
-    plafondId = plafondId,
-    plafondTitle = plafondTitle,
-    totalLimit = totalLimit,
-    availableLimit = availableLimit,
-    isLocked = isLocked
-)
+fun LoanLimit.toEntity() =
+    LoanLimitEntity(
+        id = id,
+        plafondId = plafondId,
+        plafondTitle = plafondTitle,
+        totalLimit = totalLimit,
+        availableLimit = availableLimit,
+        isLocked = isLocked,
+    )

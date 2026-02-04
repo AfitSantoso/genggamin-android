@@ -25,7 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    viewModel: RegisterViewModel = hiltViewModel()
+    viewModel: RegisterViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -42,22 +42,22 @@ fun RegisterScreen(
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = "Buat Akun",
             style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             ),
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 8.dp),
         )
-        
+
         Text(
             text = "Daftar untuk mulai menggunakan Genggamin",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = 32.dp),
         )
 
         OutlinedTextField(
@@ -69,7 +69,7 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             isError = uiState.fullNameError != null,
             supportingText = uiState.fullNameError?.let { { Text(it) } },
-            singleLine = true
+            singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -83,7 +83,7 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             isError = uiState.usernameError != null,
             supportingText = uiState.usernameError?.let { { Text(it) } },
-            singleLine = true
+            singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -98,7 +98,7 @@ fun RegisterScreen(
             isError = uiState.emailError != null,
             supportingText = uiState.emailError?.let { { Text(it) } },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            singleLine = true
+            singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -113,7 +113,7 @@ fun RegisterScreen(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi"
+                        contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi",
                     )
                 }
             },
@@ -122,7 +122,7 @@ fun RegisterScreen(
             supportingText = uiState.passwordError?.let { { Text(it) } },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
+            singleLine = true,
         )
 
         if (uiState.error != null) {
@@ -131,13 +131,13 @@ fun RegisterScreen(
                 shape = MaterialTheme.shapes.small,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 16.dp)
+                    .padding(top = 16.dp),
             ) {
                 Text(
                     text = uiState.error!!,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(8.dp),
                 )
             }
         }
@@ -149,13 +149,13 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            enabled = !uiState.isLoading && uiState.isFormValid
+            enabled = !uiState.isLoading && uiState.isFormValid,
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
+                    strokeWidth = 2.dp,
                 )
             } else {
                 Text("Daftar", style = MaterialTheme.typography.titleMedium)
@@ -164,11 +164,11 @@ fun RegisterScreen(
 
         Row(
             modifier = Modifier.padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Sudah memiliki akun?",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
             TextButton(onClick = onNavigateToLogin) {
                 Text("Masuk di sini", fontWeight = FontWeight.Bold)

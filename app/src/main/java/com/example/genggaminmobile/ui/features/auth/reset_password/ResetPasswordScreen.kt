@@ -28,11 +28,11 @@ import com.example.genggaminmobile.ui.theme.GenggaminmobileTheme
 fun ResetPasswordScreen(
     onResetSuccess: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ResetPasswordViewModel = hiltViewModel()
+    viewModel: ResetPasswordViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
+
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
@@ -52,32 +52,32 @@ fun ResetPasswordScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Reset Password", style = MaterialTheme.typography.titleMedium) }
+                title = { Text("Reset Password", style = MaterialTheme.typography.titleMedium) },
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
                 text = "Buat Password Baru",
                 style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 ),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
 
             Text(
                 text = "Silakan masukkan kata sandi baru Anda di bawah ini.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 12.dp, bottom = 40.dp)
+                modifier = Modifier.padding(top = 12.dp, bottom = 40.dp),
             )
 
             OutlinedTextField(
@@ -89,7 +89,7 @@ fun ResetPasswordScreen(
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
+                            contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password",
                         )
                     }
                 },
@@ -97,7 +97,7 @@ fun ResetPasswordScreen(
                 shape = RoundedCornerShape(16.dp),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
+                singleLine = true,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -111,7 +111,7 @@ fun ResetPasswordScreen(
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                         Icon(
                             imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password"
+                            contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password",
                         )
                     }
                 },
@@ -120,7 +120,7 @@ fun ResetPasswordScreen(
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
-                isError = uiState.error == "Kata sandi tidak cocok"
+                isError = uiState.error == "Kata sandi tidak cocok",
             )
 
             if (uiState.error != null) {
@@ -128,7 +128,7 @@ fun ResetPasswordScreen(
                     text = uiState.error ?: "",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp).align(Alignment.Start)
+                    modifier = Modifier.padding(top = 4.dp).align(Alignment.Start),
                 )
             }
 
@@ -141,14 +141,14 @@ fun ResetPasswordScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 enabled = !uiState.isLoading && uiState.newPassword.isNotBlank() && uiState.confirmPassword.isNotBlank(),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
                     Text(
                         text = "Update Password",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             }
@@ -161,7 +161,7 @@ fun ResetPasswordScreen(
 fun ResetPasswordScreenPreview() {
     GenggaminmobileTheme {
         ResetPasswordScreen(
-            onResetSuccess = {}
+            onResetSuccess = {},
         )
     }
 }

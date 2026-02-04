@@ -26,7 +26,7 @@ fun ForgotPasswordScreen(
     onBack: () -> Unit,
     onNavigateToResetPassword: (String) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ForgotPasswordViewModel = hiltViewModel()
+    viewModel: ForgotPasswordViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -53,32 +53,32 @@ fun ForgotPasswordScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Kembali")
                     }
-                }
+                },
             )
-        }
+        },
     ) { padding ->
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
                 text = "Atur Ulang Kata Sandi",
                 style = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 ),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
 
             Text(
                 text = "Masukkan email Anda untuk menerima instruksi pengaturan ulang kata sandi",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 12.dp, bottom = 40.dp)
+                modifier = Modifier.padding(top = 12.dp, bottom = 40.dp),
             )
 
             OutlinedTextField(
@@ -91,7 +91,7 @@ fun ForgotPasswordScreen(
                 shape = RoundedCornerShape(16.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 singleLine = true,
-                isError = uiState.error != null
+                isError = uiState.error != null,
             )
 
             if (uiState.error != null) {
@@ -99,7 +99,7 @@ fun ForgotPasswordScreen(
                     text = uiState.error ?: "",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp).align(Alignment.Start)
+                    modifier = Modifier.padding(top = 4.dp).align(Alignment.Start),
                 )
             }
 
@@ -112,14 +112,14 @@ fun ForgotPasswordScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 enabled = !uiState.isLoading && uiState.email.isNotBlank(),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
                 } else {
                     Text(
                         text = "Kirim Instruksi",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             }
@@ -133,7 +133,7 @@ fun ForgotPasswordScreenPreview() {
     GenggaminmobileTheme {
         ForgotPasswordScreen(
             onBack = {},
-            onNavigateToResetPassword = {}
+            onNavigateToResetPassword = {},
         )
     }
 }

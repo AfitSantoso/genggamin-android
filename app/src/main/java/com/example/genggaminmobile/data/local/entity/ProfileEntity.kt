@@ -28,5 +28,5 @@ data class ProfileEntity(
     val localSelfiePath: String? = null,
     val localPayslipPath: String? = null,
     val emergencyContactsJson: String, // Stored as JSON string
-    val createdAt: String
+    val createdAt: String,
 )

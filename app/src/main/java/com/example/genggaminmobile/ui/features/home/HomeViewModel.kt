@@ -27,17 +27,18 @@ data class HomeUiState(
     val hasProfile: Boolean = false,
     val monthlyIncome: Long? = null,
     val showProfilePrompt: Boolean = false,
-    val showPromoPopup: Boolean = true
+    val showPromoPopup: Boolean = true,
 )
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class HomeViewModel
+@Inject
+constructor(
     private val plafondRepository: PlafondRepository,
     private val authRepository: AuthRepository,
     private val customerRepository: CustomerRepository,
-    private val loanRepository: LoanRepository
+    private val loanRepository: LoanRepository,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -48,14 +49,15 @@ class HomeViewModel @Inject constructor(
     fun checkLoginStatusAndLoadPlafonds() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            
+
             val token = authRepository.getAuthToken().first()
             val isLoggedIn = !token.isNullOrBlank()
-            
-            _uiState.value = _uiState.value.copy(
-                isLoggedIn = isLoggedIn,
-                isLoading = false
-            )
+
+            _uiState.value =
+                _uiState.value.copy(
+                    isLoggedIn = isLoggedIn,
+                    isLoading = false,
+                )
 
             if (isLoggedIn) {
                 launch { loadProfile() }
@@ -70,29 +72,31 @@ class HomeViewModel @Inject constructor(
     private suspend fun loadProfile() {
         customerRepository.getProfile().fold(
             onSuccess = { profile ->
-                _uiState.value = _uiState.value.copy(
-                    hasProfile = true,
-                    monthlyIncome = profile.monthlyIncome
-                )
+                _uiState.value =
+                    _uiState.value.copy(
+                        hasProfile = true,
+                        monthlyIncome = profile.monthlyIncome,
+                    )
                 loadPlafondsByIncome(profile.monthlyIncome)
             },
             onFailure = {
-                _uiState.value = _uiState.value.copy(
-                    hasProfile = false,
-                    monthlyIncome = null
-                )
+                _uiState.value =
+                    _uiState.value.copy(
+                        hasProfile = false,
+                        monthlyIncome = null,
+                    )
                 loadAllPlafonds()
-            }
+            },
         )
     }
 
     private suspend fun loadLimits() {
-         viewModelScope.launch {
-             loanRepository.getLimitsFlow().collect { limits ->
-                 _uiState.value = _uiState.value.copy(loanLimits = limits)
-             }
-         }
-         loanRepository.getMyLimits()
+        viewModelScope.launch {
+            loanRepository.getLimitsFlow().collect { limits ->
+                _uiState.value = _uiState.value.copy(loanLimits = limits)
+            }
+        }
+        loanRepository.getMyLimits()
     }
 
     private suspend fun loadActiveLoans() {
@@ -109,7 +113,7 @@ class HomeViewModel @Inject constructor(
             },
             onFailure = { e ->
                 _uiState.value = _uiState.value.copy(error = e.message)
-            }
+            },
         )
     }
 
@@ -120,7 +124,7 @@ class HomeViewModel @Inject constructor(
             },
             onFailure = {
                 loadAllPlafonds() // Fallback
-            }
+            },
         )
     }
 

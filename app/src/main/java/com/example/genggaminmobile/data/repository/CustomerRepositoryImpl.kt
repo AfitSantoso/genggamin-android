@@ -26,7 +26,7 @@ class CustomerRepositoryImpl @Inject constructor(
     private val customerApi: CustomerApi,
     private val gson: Gson,
     private val profileDao: ProfileDao,
-    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
 ) : CustomerRepository {
 
     override suspend fun getProfile(): Result<CustomerProfileResponse> {
@@ -40,20 +40,20 @@ class CustomerRepositoryImpl @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: HttpException) {
-             // Try load local
-             val local = profileDao.getProfileOneShot()
-             if (local != null) {
-                 Result.success(mapEntityToResponse(local))
-             } else {
-                 Result.failure(Exception("Gagal mengambil profil: ${e.code()}"))
-             }
+            // Try load local
+            val local = profileDao.getProfileOneShot()
+            if (local != null) {
+                Result.success(mapEntityToResponse(local))
+            } else {
+                Result.failure(Exception("Gagal mengambil profil: ${e.code()}"))
+            }
         } catch (e: Exception) {
-             val local = profileDao.getProfileOneShot()
-             if (local != null) {
-                 Result.success(mapEntityToResponse(local))
-             } else {
-                 Result.failure(e)
-             }
+            val local = profileDao.getProfileOneShot()
+            if (local != null) {
+                Result.success(mapEntityToResponse(local))
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
@@ -87,7 +87,7 @@ class CustomerRepositoryImpl @Inject constructor(
             localSelfiePath = localSelfie,
             localPayslipPath = localPayslip,
             emergencyContactsJson = gson.toJson(data.emergencyContacts),
-            createdAt = data.createdAt
+            createdAt = data.createdAt,
         )
         profileDao.insertProfile(entity)
     }
@@ -95,7 +95,7 @@ class CustomerRepositoryImpl @Inject constructor(
     private fun mapEntityToResponse(entity: ProfileEntity): CustomerProfileResponse {
         val contactsType = object : com.google.gson.reflect.TypeToken<List<com.example.genggaminmobile.data.model.dto.EmergencyContactDto>>() {}.type
         val contacts: List<com.example.genggaminmobile.data.model.dto.EmergencyContactDto> = gson.fromJson(entity.emergencyContactsJson, contactsType) ?: emptyList()
-        
+
         return CustomerProfileResponse(
             id = entity.id,
             userId = entity.userId,
@@ -117,16 +117,15 @@ class CustomerRepositoryImpl @Inject constructor(
             selfieImagePath = entity.localSelfiePath ?: entity.selfieImagePath,
             payslipImagePath = entity.localPayslipPath ?: entity.payslipImagePath,
             emergencyContacts = contacts,
-            createdAt = entity.createdAt
+            createdAt = entity.createdAt,
         )
     }
-
 
     override suspend fun createOrUpdateProfile(
         data: CustomerProfileRequest,
         ktp: File?,
         selfie: File?,
-        payslip: File?
+        payslip: File?,
     ): Result<CustomerProfileResponse> {
         return try {
             val jsonString = gson.toJson(data)
@@ -146,7 +145,7 @@ class CustomerRepositoryImpl @Inject constructor(
             }
 
             val response = customerApi.createOrUpdateProfile(dataPart, ktpPart, selfiePart, payslipPart)
-            
+
             if (response.success && response.data != null) {
                 // Update local DB after success, FORCE download new images
                 saveProfileToDb(response.data, forceDownload = true)
@@ -155,15 +154,15 @@ class CustomerRepositoryImpl @Inject constructor(
                 Result.failure(Exception(response.message))
             }
         } catch (e: HttpException) {
-             // Save pending update
-             savePendingUpdate(data, ktp, selfie, payslip)
-             val pendingResponse = createFakeResponseFromRequest(data)
-             Result.success(pendingResponse)
+            // Save pending update
+            savePendingUpdate(data, ktp, selfie, payslip)
+            val pendingResponse = createFakeResponseFromRequest(data)
+            Result.success(pendingResponse)
         } catch (e: Exception) {
-             savePendingUpdate(data, ktp, selfie, payslip)
-             scheduleImmediateSync()
-             val pendingResponse = createFakeResponseFromRequest(data)
-             Result.success(pendingResponse)
+            savePendingUpdate(data, ktp, selfie, payslip)
+            scheduleImmediateSync()
+            val pendingResponse = createFakeResponseFromRequest(data)
+            Result.success(pendingResponse)
         }
     }
 
@@ -171,22 +170,22 @@ class CustomerRepositoryImpl @Inject constructor(
         val constraints = androidx.work.Constraints.Builder()
             .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
             .build()
-            
+
         val syncRequest = androidx.work.OneTimeWorkRequest.Builder(
-            com.example.genggaminmobile.data.worker.SyncWorker::class.java
+            com.example.genggaminmobile.data.worker.SyncWorker::class.java,
         )
             .setConstraints(constraints)
             .setBackoffCriteria(
                 androidx.work.BackoffPolicy.EXPONENTIAL,
                 androidx.work.WorkRequest.MIN_BACKOFF_MILLIS,
-                java.util.concurrent.TimeUnit.MILLISECONDS
+                java.util.concurrent.TimeUnit.MILLISECONDS,
             )
             .build()
-            
+
         androidx.work.WorkManager.getInstance(context).enqueueUniqueWork(
             "ImmediateSyncProfile",
             androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE,
-            syncRequest
+            syncRequest,
         )
     }
 
@@ -194,13 +193,13 @@ class CustomerRepositoryImpl @Inject constructor(
         data: CustomerProfileRequest,
         ktp: File?,
         selfie: File?,
-        payslip: File?
+        payslip: File?,
     ) {
         val entity = com.example.genggaminmobile.data.local.entity.PendingProfileUpdateEntity(
             jsonRequest = gson.toJson(data),
             ktpPath = ktp?.absolutePath,
             selfiePath = selfie?.absolutePath,
-            payslipPath = payslip?.absolutePath
+            payslipPath = payslip?.absolutePath,
         )
         profileDao.insertPendingUpdate(entity)
     }
@@ -228,7 +227,7 @@ class CustomerRepositoryImpl @Inject constructor(
             selfieImagePath = "",
             payslipImagePath = "",
             emergencyContacts = listOf(req.emergencyContact),
-            createdAt = ""
+            createdAt = "",
         )
     }
 
@@ -255,7 +254,7 @@ class CustomerRepositoryImpl @Inject constructor(
             }
 
             val response = customerApi.createOrUpdateProfile(dataPart, ktpPart, selfiePart, payslipPart)
-            
+
             if (response.success && response.data != null) {
                 saveProfileToDb(response.data, forceDownload = true)
                 profileDao.clearPendingUpdate()
@@ -282,12 +281,12 @@ class CustomerRepositoryImpl @Inject constructor(
             val maxSize = 1024
             val width = bitmap.width
             val height = bitmap.height
-            
+
             if (width > maxSize || height > maxSize) {
                 val bitmapRatio = width.toFloat() / height.toFloat()
                 val targetWidth: Int
                 val targetHeight: Int
-                
+
                 if (bitmapRatio > 1) {
                     targetWidth = maxSize
                     targetHeight = (maxSize / bitmapRatio).toInt()
@@ -296,16 +295,16 @@ class CustomerRepositoryImpl @Inject constructor(
                     targetWidth = (maxSize * bitmapRatio).toInt()
                 }
                 bitmap = Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
-                Log.d("CustomerRepo", "Resized ${file.name} to ${targetWidth}x${targetHeight}")
+                Log.d("CustomerRepo", "Resized ${file.name} to ${targetWidth}x$targetHeight")
             }
 
             // 2. Compress: Gunakan kualitas 60%
             val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
-            
+
             val byteArray = outputStream.toByteArray()
             Log.d("CustomerRepo", "Final Size ${file.name}: ${byteArray.size / 1024} KB")
-            
+
             byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull())
         } catch (e: Exception) {
             Log.e("CustomerRepo", "Gagal olah ${file.name}, kirim asli", e)
@@ -319,7 +318,7 @@ class CustomerRepositoryImpl @Inject constructor(
                 val file = File(context.filesDir, filename)
                 // If it's a local path already, just return it
                 if (url.startsWith("/")) return@withContext url
-                
+
                 if (!force && file.exists() && file.length() > 0) return@withContext file.absolutePath
 
                 val finalUrl = if (url.startsWith("http")) url else "http://10.0.2.2:8080$url" // Fallback IP for emulator

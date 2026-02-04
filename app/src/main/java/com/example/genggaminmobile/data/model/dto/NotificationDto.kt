@@ -9,21 +9,21 @@ data class NotificationDto(
     @SerializedName("read") val read: Boolean,
     @SerializedName("createdAt") val createdAt: String,
     @SerializedName("type") val type: String? = null,
-    @SerializedName("loanId") val loanId: Long? = null
+    @SerializedName("loanId") val loanId: Long? = null,
 )
 
 data class NotificationListResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String,
-    @SerializedName("data") val data: NotificationPageData?
+    @SerializedName("data") val data: NotificationPageData?,
 )
 
 data class NotificationPageData(
-    @SerializedName("content") val content: List<NotificationDto>
+    @SerializedName("content") val content: List<NotificationDto>,
 )
 
 data class NotificationResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String,
-    @SerializedName("data") val data: NotificationDto?
+    @SerializedName("data") val data: NotificationDto?,
 )

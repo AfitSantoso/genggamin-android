@@ -17,10 +17,10 @@ interface LoanLimitDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLimits(limits: List<LoanLimitEntity>)
-    
+
     @androidx.room.Update
     suspend fun updateLimit(limit: LoanLimitEntity)
-    
+
     @Query("DELETE FROM loan_limits")
     suspend fun clearLimits()
 }

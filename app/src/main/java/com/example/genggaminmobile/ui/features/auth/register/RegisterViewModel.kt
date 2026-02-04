@@ -12,10 +12,11 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class RegisterViewModel @Inject constructor(
-    private val registerUseCase: RegisterUseCase
+class RegisterViewModel
+@Inject
+constructor(
+    private val registerUseCase: RegisterUseCase,
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
@@ -24,7 +25,7 @@ class RegisterViewModel @Inject constructor(
             it.copy(
                 fullName = value,
                 fullNameError = if (value.isBlank()) "Nama lengkap tidak boleh kosong" else null,
-                error = null
+                error = null,
             )
         }
     }
@@ -34,27 +35,29 @@ class RegisterViewModel @Inject constructor(
             it.copy(
                 username = value,
                 usernameError = if (value.isBlank()) "Username tidak boleh kosong" else null,
-                error = null
+                error = null,
             )
         }
     }
 
     fun onEmailChange(value: String) {
         val emailPattern = android.util.Patterns.EMAIL_ADDRESS
-        val error = when {
-            value.isBlank() -> "Email tidak boleh kosong"
-            !emailPattern.matcher(value).matches() -> "Format email tidak valid"
-            else -> null
-        }
+        val error =
+            when {
+                value.isBlank() -> "Email tidak boleh kosong"
+                !emailPattern.matcher(value).matches() -> "Format email tidak valid"
+                else -> null
+            }
         _uiState.update { it.copy(email = value, emailError = error, error = null) }
     }
 
     fun onPasswordChange(value: String) {
-        val error = when {
-            value.isBlank() -> "Kata sandi tidak boleh kosong"
-            value.length < 6 -> "Kata sandi minimal 6 karakter"
-            else -> null
-        }
+        val error =
+            when {
+                value.isBlank() -> "Kata sandi tidak boleh kosong"
+                value.length < 6 -> "Kata sandi minimal 6 karakter"
+                else -> null
+            }
         _uiState.update { it.copy(password = value, passwordError = error, error = null) }
     }
 
@@ -69,7 +72,7 @@ class RegisterViewModel @Inject constructor(
                 username = currentState.username,
                 email = currentState.email,
                 password = currentState.password,
-                fullName = currentState.fullName
+                fullName = currentState.fullName,
             ).onSuccess {
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             }.onFailure { error ->

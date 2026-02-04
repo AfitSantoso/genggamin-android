@@ -4,12 +4,34 @@ import com.example.genggaminmobile.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
-    suspend fun login(username: String, password: String, fcmToken: String?): Result<User>
-    suspend fun loginGoogle(idToken: String, fcmToken: String?): Result<User>
-    suspend fun register(username: String, email: String, password: String, fullName: String): Result<Unit>
+    suspend fun login(
+        username: String,
+        password: String,
+        fcmToken: String?,
+    ): Result<User>
+
+    suspend fun loginGoogle(
+        idToken: String,
+        fcmToken: String?,
+    ): Result<User>
+
+    suspend fun register(
+        username: String,
+        email: String,
+        password: String,
+        fullName: String,
+    ): Result<Unit>
+
     suspend fun logout(): Result<Unit>
+
     fun getAuthToken(): Flow<String?>
+
     suspend fun saveAuthToken(token: String)
+
     suspend fun forgotPassword(email: String): Result<Pair<String, String?>>
-    suspend fun resetPassword(token: String, newPassword: String): Result<String>
+
+    suspend fun resetPassword(
+        token: String,
+        newPassword: String,
+    ): Result<String>
 }

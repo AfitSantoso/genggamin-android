@@ -6,11 +6,12 @@ import java.io.File
 
 interface CustomerRepository {
     suspend fun getProfile(): Result<CustomerProfileResponse>
+
     suspend fun createOrUpdateProfile(
         data: CustomerProfileRequest,
         ktp: File?,
         selfie: File?,
-        payslip: File?
+        payslip: File?,
     ): Result<CustomerProfileResponse>
 
     suspend fun syncPendingProfile(): Result<Unit>

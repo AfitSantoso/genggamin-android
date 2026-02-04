@@ -8,7 +8,7 @@ data class Loan(
     val plafondId: Long,
     val status: String,
     val interestRate: Double?,
-    val date: String?
+    val date: String?,
 )
 
 data class LoanLimit(
@@ -17,5 +17,5 @@ data class LoanLimit(
     val plafondTitle: String,
     val totalLimit: Long,
     val availableLimit: Long,
-    val isLocked: Boolean
+    val isLocked: Boolean,
 )

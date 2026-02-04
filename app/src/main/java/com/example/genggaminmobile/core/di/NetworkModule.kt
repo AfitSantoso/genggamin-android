@@ -3,9 +3,9 @@ package com.example.genggaminmobile.core.di
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.data.remote.api.CustomerApi
-import com.example.genggaminmobile.data.remote.api.PlafondApi
 import com.example.genggaminmobile.data.remote.api.LoanApi
 import com.example.genggaminmobile.data.remote.api.NotificationApi
+import com.example.genggaminmobile.data.remote.api.PlafondApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -24,7 +24,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
     @Provides
     @Singleton
     fun provideGson(): Gson {
@@ -43,9 +42,10 @@ object NetworkModule {
     @Singleton
     fun provideAuthInterceptor(preferencesManager: PreferencesManager): Interceptor {
         return Interceptor { chain ->
-            val token = runBlocking {
-                preferencesManager.authToken.first()
-            }
+            val token =
+                runBlocking {
+                    preferencesManager.authToken.first()
+                }
             val request = chain.request().newBuilder()
             if (!token.isNullOrBlank()) {
                 request.addHeader("Authorization", "Bearer $token")
@@ -58,7 +58,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
-        authInterceptor: Interceptor
+        authInterceptor: Interceptor,
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
@@ -68,7 +68,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson,
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl("http://10.130.233.197:8080")
             .addConverterFactory(GsonConverterFactory.create(gson))

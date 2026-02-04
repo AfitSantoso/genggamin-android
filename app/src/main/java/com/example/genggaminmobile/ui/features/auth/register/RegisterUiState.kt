@@ -11,10 +11,11 @@ data class RegisterUiState(
     val fullNameError: String? = null,
     val usernameError: String? = null,
     val emailError: String? = null,
-    val passwordError: String? = null
+    val passwordError: String? = null,
 ) {
     val isFormValid: Boolean
-        get() = fullName.isNotBlank() &&
+        get() =
+            fullName.isNotBlank() &&
                 username.isNotBlank() &&
                 email.isNotBlank() &&
                 password.isNotBlank() &&

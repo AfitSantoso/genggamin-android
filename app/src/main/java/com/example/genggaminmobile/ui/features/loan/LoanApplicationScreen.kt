@@ -47,7 +47,7 @@ import java.util.*
 @Composable
 fun LoanApplicationScreen(
     onBack: () -> Unit,
-    viewModel: LoanViewModel = hiltViewModel()
+    viewModel: LoanViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -56,10 +56,10 @@ fun LoanApplicationScreen(
 
     // Launcher for location permissions
     val locationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
+        ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (granted) {
             fetchCurrentLocation(fusedLocationClient, viewModel)
         }
@@ -69,12 +69,12 @@ fun LoanApplicationScreen(
     LaunchedEffect(Unit) {
         val fineGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        
+
         if (fineGranted || coarseGranted) {
             fetchCurrentLocation(fusedLocationClient, viewModel)
         } else {
             locationPermissionLauncher.launch(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
             )
         }
     }
@@ -93,11 +93,11 @@ fun LoanApplicationScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
-        contentWindowInsets = WindowInsets.statusBars
+        contentWindowInsets = WindowInsets.statusBars,
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             if (uiState.isLoading && uiState.plafonds.isEmpty()) {
@@ -105,7 +105,7 @@ fun LoanApplicationScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 120.dp)
+                    contentPadding = PaddingValues(bottom = 120.dp),
                 ) {
                     item {
                         LoanHeaderSection()
@@ -114,7 +114,7 @@ fun LoanApplicationScreen(
                     item {
                         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                             Spacer(modifier = Modifier.height(24.dp))
-                            
+
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.ListAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -122,17 +122,17 @@ fun LoanApplicationScreen(
                                     "Pilih Produk Pinjaman",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 0.2.sp
+                                    letterSpacing = 0.2.sp,
                                 )
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            
+
                             PlafondSelectionList(
                                 plafonds = uiState.plafonds,
                                 limits = uiState.limits,
                                 selectedPlafond = uiState.selectedPlafond,
                                 onPlafondSelected = viewModel::onPlafondSelected,
-                                currencyFormatter = currencyFormatter
+                                currencyFormatter = currencyFormatter,
                             )
 
                             Spacer(modifier = Modifier.height(24.dp))
@@ -141,7 +141,7 @@ fun LoanApplicationScreen(
                                 AnimatedVisibility(
                                     visible = true,
                                     enter = fadeIn() + expandVertically(),
-                                    exit = fadeOut() + shrinkVertically()
+                                    exit = fadeOut() + shrinkVertically(),
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                                         LoanInputSection(
@@ -153,13 +153,13 @@ fun LoanApplicationScreen(
                                             onPurposeChange = viewModel::onPurposeChanged,
                                             selectedPlafond = uiState.selectedPlafond!!,
                                             selectedLimit = uiState.selectedLimit,
-                                            currencyFormatter = currencyFormatter
+                                            currencyFormatter = currencyFormatter,
                                         )
 
                                         if (uiState.simulation != null) {
                                             ModernSimulationCard(
                                                 simulation = uiState.simulation!!,
-                                                currencyFormatter = currencyFormatter
+                                                currencyFormatter = currencyFormatter,
                                             )
                                         }
 
@@ -167,11 +167,11 @@ fun LoanApplicationScreen(
                                             Surface(
                                                 color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f),
                                                 shape = RoundedCornerShape(16.dp),
-                                                modifier = Modifier.fillMaxWidth()
+                                                modifier = Modifier.fillMaxWidth(),
                                             ) {
                                                 Row(
                                                     modifier = Modifier.padding(16.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
+                                                    verticalAlignment = Alignment.CenterVertically,
                                                 ) {
                                                     Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
                                                     Spacer(modifier = Modifier.width(12.dp))
@@ -194,7 +194,7 @@ fun LoanApplicationScreen(
                         .fillMaxWidth(),
                     tonalElevation = 8.dp,
                     shadowElevation = 24.dp,
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     Button(
                         onClick = viewModel::submitLoan,
@@ -204,7 +204,7 @@ fun LoanApplicationScreen(
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         enabled = uiState.selectedPlafond != null && !uiState.isLoading,
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
@@ -221,7 +221,7 @@ fun LoanApplicationScreen(
 @SuppressLint("MissingPermission")
 private fun fetchCurrentLocation(
     fusedLocationClient: FusedLocationProviderClient,
-    viewModel: LoanViewModel
+    viewModel: LoanViewModel,
 ) {
     fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
         .addOnSuccessListener { location ->
@@ -240,16 +240,16 @@ fun LoanHeaderSection() {
             .clip(RoundedCornerShape(bottomStart = 40.dp, bottomEnd = 40.dp))
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
-                )
+                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer),
+                ),
             ),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(bottom = 16.dp)) {
             Surface(
                 color = Color.White.copy(alpha = 0.2f),
                 shape = CircleShape,
-                modifier = Modifier.size(56.dp)
+                modifier = Modifier.size(56.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
@@ -269,11 +269,11 @@ fun PlafondSelectionList(
     limits: List<LoanLimit>,
     selectedPlafond: Plafond?,
     onPlafondSelected: (Plafond) -> Unit,
-    currencyFormatter: NumberFormat
+    currencyFormatter: NumberFormat,
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(horizontal = 4.dp)
+        contentPadding = PaddingValues(horizontal = 4.dp),
     ) {
         items(plafonds) { plafond ->
             val limit = limits.find { it.plafondId == plafond.id.toLong() }
@@ -287,8 +287,8 @@ fun PlafondSelectionList(
                     .height(160.dp),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.elevatedCardColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             ) {
                 Box(
                     modifier = Modifier
@@ -298,36 +298,40 @@ fun PlafondSelectionList(
                                 Brush.horizontalGradient(
                                     colors = listOf(
                                         MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-                                    )
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
+                                    ),
                                 )
                             } else {
                                 Brush.linearGradient(
                                     colors = listOf(
                                         MaterialTheme.colorScheme.surface,
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                                    )
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    ),
                                 )
-                            }
+                            },
                         )
                         .then(
-                            if (!isSelected) Modifier.border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                                RoundedCornerShape(28.dp)
-                            ) else Modifier
-                        )
+                            if (!isSelected) {
+                                Modifier.border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                    RoundedCornerShape(28.dp),
+                                )
+                            } else {
+                                Modifier
+                            },
+                        ),
                 ) {
                     Column(
                         modifier = Modifier
                             .padding(20.dp)
                             .fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top
+                            verticalAlignment = Alignment.Top,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
@@ -335,19 +339,19 @@ fun PlafondSelectionList(
                                     fontWeight = FontWeight.ExtraBold,
                                     style = MaterialTheme.typography.titleMedium,
                                     maxLines = 1,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Surface(
                                     color = if (isSelected) Color.White.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(8.dp),
                                 ) {
                                     Text(
                                         "Bunga ${plafond.interestRate}%",
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = if (isSelected) Color.White else MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -356,7 +360,7 @@ fun PlafondSelectionList(
                                     Icons.Default.CheckCircle,
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(28.dp),
                                 )
                             }
                         }
@@ -365,7 +369,7 @@ fun PlafondSelectionList(
                             Text(
                                 "Sisa Limit Tersedia",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isSelected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (isSelected) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             val limitValue = limit?.availableLimit ?: plafond.maxAmount
                             Text(
@@ -373,7 +377,7 @@ fun PlafondSelectionList(
                                 fontWeight = FontWeight.Black,
                                 style = MaterialTheme.typography.titleLarge,
                                 color = if (isSelected) Color.White else if (isAvailable) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
-                                letterSpacing = 0.5.sp
+                                letterSpacing = 0.5.sp,
                             )
                         }
                     }
@@ -393,12 +397,12 @@ fun LoanInputSection(
     onPurposeChange: (String) -> Unit,
     selectedPlafond: Plafond,
     selectedLimit: LoanLimit?,
-    currencyFormatter: NumberFormat
+    currencyFormatter: NumberFormat,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -418,7 +422,7 @@ fun LoanInputSection(
                 icon = Icons.Outlined.Payments,
                 keyboardType = KeyboardType.Number,
                 prefix = "Rp ",
-                supportingText = "Min: Rp 400.000, Max: ${currencyFormatter.format(selectedLimit?.availableLimit ?: selectedPlafond.maxAmount)}"
+                supportingText = "Min: Rp 400.000, Max: ${currencyFormatter.format(selectedLimit?.availableLimit ?: selectedPlafond.maxAmount)}",
             )
 
             ModernLoanTextField(
@@ -427,7 +431,7 @@ fun LoanInputSection(
                 label = "Jangka Waktu (Bulan)",
                 icon = Icons.Outlined.Timer,
                 keyboardType = KeyboardType.Number,
-                supportingText = "Maksimal ${selectedPlafond.tenorMonth} Bulan"
+                supportingText = "Maksimal ${selectedPlafond.tenorMonth} Bulan",
             )
 
             ModernLoanTextField(
@@ -436,7 +440,7 @@ fun LoanInputSection(
                 label = "Tujuan Penggunaan Dana",
                 icon = Icons.Outlined.Info,
                 singleLine = false,
-                minLines = 2
+                minLines = 2,
             )
         }
     }
@@ -445,20 +449,20 @@ fun LoanInputSection(
 @Composable
 fun ModernSimulationCard(
     simulation: LoanSimulation,
-    currencyFormatter: NumberFormat
+    currencyFormatter: NumberFormat,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(color = MaterialTheme.colorScheme.primary, shape = CircleShape, modifier = Modifier.size(36.dp)) {
@@ -471,30 +475,30 @@ fun ModernSimulationCard(
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
                 ) {
                     Text(
                         "Bunga ${simulation.interestRate}%",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(20.dp))
-            
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
                     .background(
                         Brush.horizontalGradient(
-                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                        )
+                            colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)),
+                        ),
                     )
-                    .padding(24.dp)
+                    .padding(24.dp),
             ) {
                 Column {
                     Text("Angsuran Per Bulan", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
@@ -504,7 +508,7 @@ fun ModernSimulationCard(
                         color = Color.White,
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 0.5.sp
+                        letterSpacing = 0.5.sp,
                     )
                 }
             }
@@ -515,12 +519,12 @@ fun ModernSimulationCard(
                 SimulationDetailBox(
                     label = "Total Bunga",
                     value = currencyFormatter.format(simulation.totalInterest),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 SimulationDetailBox(
                     label = "Total Bayar",
                     value = currencyFormatter.format(simulation.totalRepayment),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -533,7 +537,7 @@ fun SimulationDetailBox(label: String, value: String, modifier: Modifier = Modif
         modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
@@ -553,7 +557,7 @@ fun ModernLoanTextField(
     prefix: String? = null,
     supportingText: String? = null,
     singleLine: Boolean = true,
-    minLines: Int = 1
+    minLines: Int = 1,
 ) {
     OutlinedTextField(
         value = value,
@@ -563,8 +567,16 @@ fun ModernLoanTextField(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        prefix = if (prefix != null) { { Text(prefix, fontWeight = FontWeight.SemiBold) } } else null,
-        supportingText = if (supportingText != null) { { Text(supportingText, style = MaterialTheme.typography.labelSmall) } } else null,
+        prefix = if (prefix != null) {
+            { Text(prefix, fontWeight = FontWeight.SemiBold) }
+        } else {
+            null
+        },
+        supportingText = if (supportingText != null) {
+            { Text(supportingText, style = MaterialTheme.typography.labelSmall) }
+        } else {
+            null
+        },
         singleLine = singleLine,
         minLines = minLines,
         colors = OutlinedTextFieldDefaults.colors(
@@ -573,8 +585,8 @@ fun ModernLoanTextField(
             unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            focusedLabelColor = MaterialTheme.colorScheme.primary
-        )
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+        ),
     )
 }
 
@@ -582,19 +594,19 @@ fun ModernLoanTextField(
 fun EmptySelectionState() {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 60.dp, bottom = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Surface(
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
             shape = CircleShape,
-            modifier = Modifier.size(100.dp)
+            modifier = Modifier.size(100.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Outlined.TouchApp,
                     contentDescription = null,
                     modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
                 )
             }
         }
@@ -603,7 +615,7 @@ fun EmptySelectionState() {
             "Mulai Pengajuan Anda",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -611,7 +623,7 @@ fun EmptySelectionState() {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 20.sp
+            lineHeight = 20.sp,
         )
     }
 }
@@ -622,9 +634,9 @@ fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         confirmButton = {
             Button(
-                onClick = onDismiss, 
-                modifier = Modifier.fillMaxWidth().height(50.dp), 
-                shape = RoundedCornerShape(12.dp)
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(12.dp),
             ) {
                 Text("Lihat Status Pinjaman", fontWeight = FontWeight.Bold)
             }
@@ -633,7 +645,7 @@ fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
             Surface(
                 color = Color(0xFFE8F5E9),
                 shape = CircleShape,
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier.size(80.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(50.dp))
@@ -641,16 +653,16 @@ fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
             }
         },
         title = { Text("Pengajuan Terkirim!", fontWeight = FontWeight.Black, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
-        text = { 
+        text = {
             Text(
                 "Pinjaman Anda sedang kami proses. Tim kami akan segera melakukan verifikasi data Anda dalam waktu 1x24 jam.",
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium
-            ) 
+                style = MaterialTheme.typography.bodyMedium,
+            )
         },
         shape = RoundedCornerShape(32.dp),
         containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp
+        tonalElevation = 6.dp,
     )
 }
 

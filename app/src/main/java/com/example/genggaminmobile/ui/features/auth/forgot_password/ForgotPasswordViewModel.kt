@@ -16,12 +16,12 @@ data class ForgotPasswordUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
-    val token: String? = null
+    val token: String? = null,
 )
 
 @HiltViewModel
 class ForgotPasswordViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ForgotPasswordUiState())
@@ -49,7 +49,7 @@ class ForgotPasswordViewModel @Inject constructor(
                 }
         }
     }
-    
+
     fun resetState() {
         _uiState.update { it.copy(token = null, successMessage = null) }
     }

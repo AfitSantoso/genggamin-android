@@ -27,11 +27,11 @@ class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
+        ActivityResultContracts.RequestMultiplePermissions(),
     ) { permissions ->
         val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false ||
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
-        
+            permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
         if (locationGranted) {
             fetchLocation()
         }
@@ -40,9 +40,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        
+
         checkAndRequestPermissions()
 
         setContent {
@@ -56,14 +56,15 @@ class MainActivity : ComponentActivity() {
         super.onStart()
         // Ambil lokasi setiap kali aplikasi dibuka (masuk ke foreground)
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        ) {
             fetchLocation()
         }
     }
 
     private fun checkAndRequestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
-        
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
     private fun fetchLocation() {
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
             .addOnSuccessListener { location ->
-                // Lokasi berhasil didapat. 
+                // Lokasi berhasil didapat.
                 // Di sini bisa disimpan ke repository atau SharedPref jika diperlukan secara global.
             }
     }
@@ -103,6 +104,6 @@ fun MainNavigation() {
     val navController = rememberNavController()
     NavGraph(
         navController = navController,
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     )
 }

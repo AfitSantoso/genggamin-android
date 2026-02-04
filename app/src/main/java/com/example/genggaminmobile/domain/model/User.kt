@@ -7,5 +7,5 @@ data class User(
     val fullName: String?,
     val isActive: Boolean,
     val roles: List<String>,
-    val token: String? = null
+    val token: String? = null,
 )

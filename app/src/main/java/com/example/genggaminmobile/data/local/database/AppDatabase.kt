@@ -16,7 +16,7 @@ import com.example.genggaminmobile.data.local.entity.UserEntity
 @Database(
     entities = [UserEntity::class, PlafondEntity::class, LoanEntity::class, ProfileEntity::class, LoanLimitEntity::class, com.example.genggaminmobile.data.local.entity.PendingProfileUpdateEntity::class],
     version = 5,
-    exportSchema = false
+    exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
@@ -25,4 +25,3 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun profileDao(): ProfileDao
     abstract fun loanLimitDao(): LoanLimitDao
 }
-

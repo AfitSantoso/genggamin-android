@@ -9,5 +9,7 @@ interface PlafondApi {
     suspend fun getAllPlafonds(): PlafondResponse
 
     @GET("plafonds/by-income/{income}")
-    suspend fun getPlafondsByIncome(@Path("income") income: Long): PlafondResponse
+    suspend fun getPlafondsByIncome(
+        @Path("income") income: Long,
+    ): PlafondResponse
 }

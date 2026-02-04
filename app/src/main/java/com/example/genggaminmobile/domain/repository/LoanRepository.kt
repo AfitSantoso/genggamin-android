@@ -12,11 +12,16 @@ interface LoanRepository {
         plafondId: Long,
         interestRate: Double,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
     ): Result<Unit>
+
     fun getMyLoans(): Flow<List<Loan>>
+
     suspend fun refreshLoans(): Result<Unit>
+
     suspend fun getMyLimits(): Result<List<LoanLimit>>
+
     fun getLimitsFlow(): Flow<List<LoanLimit>>
+
     suspend fun syncUnsyncedLoans(): Result<Unit>
 }

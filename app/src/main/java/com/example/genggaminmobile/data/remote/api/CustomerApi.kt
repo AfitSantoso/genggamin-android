@@ -16,7 +16,7 @@ interface CustomerApi {
         @Part("data") data: RequestBody,
         @Part ktp: MultipartBody.Part?,
         @Part selfie: MultipartBody.Part?,
-        @Part payslip: MultipartBody.Part? = null
+        @Part payslip: MultipartBody.Part? = null,
     ): ApiResponse<CustomerProfileResponse>
 
     @GET("customers/profile")

@@ -10,18 +10,19 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
 @HiltWorker
-class SyncWorker @AssistedInject constructor(
+class SyncWorker
+@AssistedInject
+constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val loanRepository: LoanRepository,
-    private val customerRepository: CustomerRepository
+    private val customerRepository: CustomerRepository,
 ) : CoroutineWorker(appContext, workerParams) {
-
     override suspend fun doWork(): Result {
         return try {
             val loanResult = loanRepository.syncUnsyncedLoans()
             val profileResult = customerRepository.syncPendingProfile()
-            
+
             if (loanResult.isSuccess && profileResult.isSuccess) {
                 Result.success()
             } else {

@@ -9,5 +9,5 @@ data class UserEntity(
     val username: String,
     val email: String,
     val fullName: String?,
-    val isActive: Boolean
+    val isActive: Boolean,
 )

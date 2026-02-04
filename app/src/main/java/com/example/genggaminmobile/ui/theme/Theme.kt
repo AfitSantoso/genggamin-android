@@ -1,6 +1,5 @@
 package com.example.genggaminmobile.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +21,7 @@ private val DarkColorScheme = darkColorScheme(
     onSecondary = Color.Black,
     onTertiary = Color.Black,
     onBackground = Color(0xFFE2E2E6),
-    onSurface = Color(0xFFE2E2E6)
+    onSurface = Color(0xFFE2E2E6),
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -35,7 +34,7 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = Color.White,
     onTertiary = Color.White,
     onBackground = Color(0xFF1A1C1E),
-    onSurface = Color(0xFF1A1C1E)
+    onSurface = Color(0xFF1A1C1E),
 )
 
 @Composable
@@ -43,7 +42,7 @@ fun GenggaminmobileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is disabled by default for better control over the brand color (Blue)
     dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -57,6 +56,6 @@ fun GenggaminmobileTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        content = content
+        content = content,
     )
 }

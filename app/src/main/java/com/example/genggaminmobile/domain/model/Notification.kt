@@ -7,5 +7,5 @@ data class Notification(
     val isRead: Boolean,
     val createdAt: String,
     val type: String?,
-    val loanId: Long?
+    val loanId: Long?,
 )

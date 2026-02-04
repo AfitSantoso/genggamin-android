@@ -11,11 +11,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PlafondRepositoryImpl @Inject constructor(
+class PlafondRepositoryImpl
+@Inject
+constructor(
     private val plafondApi: PlafondApi,
-    private val plafondDao: PlafondDao
+    private val plafondDao: PlafondDao,
 ) : PlafondRepository {
-
     override suspend fun getAllPlafonds(): Result<List<Plafond>> {
         return try {
             val plafonds = plafondDao.getAllPlafonds().first().map { it.toDomain() }
@@ -35,17 +36,18 @@ class PlafondRepositoryImpl @Inject constructor(
         return try {
             val response = plafondApi.getAllPlafonds()
             if (response.success) {
-                val domains = response.data.map { dto ->
-                    Plafond(
-                        id = dto.id,
-                        title = dto.title,
-                        minIncome = dto.minIncome,
-                        maxAmount = dto.maxAmount,
-                        tenorMonth = dto.tenorMonth,
-                        interestRate = dto.interestRate,
-                        isActive = dto.isActive
-                    )
-                }
+                val domains =
+                    response.data.map { dto ->
+                        Plafond(
+                            id = dto.id,
+                            title = dto.title,
+                            minIncome = dto.minIncome,
+                            maxAmount = dto.maxAmount,
+                            tenorMonth = dto.tenorMonth,
+                            interestRate = dto.interestRate,
+                            isActive = dto.isActive,
+                        )
+                    }
                 plafondDao.clearPlafonds()
                 plafondDao.insertPlafonds(domains.map { it.toEntity() })
                 Result.success(Unit)

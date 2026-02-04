@@ -9,5 +9,5 @@ data class PendingProfileUpdateEntity(
     val jsonRequest: String,
     val ktpPath: String?,
     val selfiePath: String?,
-    val payslipPath: String?
+    val payslipPath: String?,
 )

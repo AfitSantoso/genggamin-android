@@ -26,12 +26,13 @@ class GenggaminApp : Application(), Configuration.Provider {
         val constraints = androidx.work.Constraints.Builder()
             .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
             .build()
-        
+
         // Use UniqueWork to ensure we don't duplicate schedules
         // Keep to existing request if present
         val syncRequest = androidx.work.PeriodicWorkRequest.Builder(
             com.example.genggaminmobile.data.worker.SyncWorker::class.java,
-            15, java.util.concurrent.TimeUnit.MINUTES // Min interval
+            15,
+            java.util.concurrent.TimeUnit.MINUTES, // Min interval
         )
             .setConstraints(constraints)
             .build()
@@ -39,7 +40,7 @@ class GenggaminApp : Application(), Configuration.Provider {
         androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "SyncWorker",
             androidx.work.ExistingPeriodicWorkPolicy.KEEP,
-            syncRequest
+            syncRequest,
         )
     }
 }

@@ -17,7 +17,7 @@ data class LoanSimulation(
     val monthlyInstallment: Long = 0,
     val totalInterest: Long = 0,
     val totalRepayment: Long = 0,
-    val interestRate: Double = 0.0
+    val interestRate: Double = 0.0,
 )
 
 data class LoanApplicationUiState(
@@ -33,14 +33,14 @@ data class LoanApplicationUiState(
     val purposeInput: String = "",
     val simulation: LoanSimulation? = null,
     val latitude: Double = -6.2866713, // Default hardcode
-    val longitude: Double = 106.7791363 // Default hardcode
+    val longitude: Double = 106.7791363, // Default hardcode
 )
 
 @HiltViewModel
 class LoanViewModel @Inject constructor(
     private val loanRepository: LoanRepository,
     private val plafondRepository: PlafondRepository,
-    private val customerRepository: com.example.genggaminmobile.domain.repository.CustomerRepository
+    private val customerRepository: com.example.genggaminmobile.domain.repository.CustomerRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoanApplicationUiState())
@@ -53,8 +53,7 @@ class LoanViewModel @Inject constructor(
     fun loadData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            
-            
+
             val profileResult = customerRepository.getProfile()
             val plafondsResult = if (profileResult.isSuccess) {
                 val profile = profileResult.getOrNull()
@@ -66,19 +65,19 @@ class LoanViewModel @Inject constructor(
             } else {
                 plafondRepository.getAllPlafonds()
             }
-            
+
             val limitsResult = loanRepository.getMyLimits()
 
             if (plafondsResult.isSuccess && limitsResult.isSuccess) {
                 _uiState.value = _uiState.value.copy(
                     plafonds = plafondsResult.getOrNull()?.filter { it.isActive } ?: emptyList(),
                     limits = limitsResult.getOrNull() ?: emptyList(),
-                    isLoading = false
+                    isLoading = false,
                 )
             } else {
                 _uiState.value = _uiState.value.copy(
                     error = "Gagal memuat data pinjaman",
-                    isLoading = false
+                    isLoading = false,
                 )
             }
         }
@@ -87,7 +86,7 @@ class LoanViewModel @Inject constructor(
     fun updateLocation(lat: Double, lon: Double) {
         _uiState.value = _uiState.value.copy(
             latitude = lat,
-            longitude = lon
+            longitude = lon,
         )
     }
 
@@ -98,7 +97,7 @@ class LoanViewModel @Inject constructor(
             selectedLimit = limit,
             amountInput = "",
             tenorInput = plafond.tenorMonth.toString(),
-            simulation = null
+            simulation = null,
         )
     }
 
@@ -121,9 +120,9 @@ class LoanViewModel @Inject constructor(
         val tenor = state.tenorInput.toIntOrNull() ?: 0
 
         if (amount > 0 && tenor > 0) {
-            val monthlyInterestRatePercent = plafond.interestRate 
-            val totalInterestPercent = monthlyInterestRatePercent * tenor 
-            
+            val monthlyInterestRatePercent = plafond.interestRate
+            val totalInterestPercent = monthlyInterestRatePercent * tenor
+
             val totalInterest = (amount * (totalInterestPercent / 100.0)).toLong()
             val totalRepayment = amount + totalInterest
             val monthlyInstallment = totalRepayment / tenor
@@ -133,8 +132,8 @@ class LoanViewModel @Inject constructor(
                     monthlyInstallment = monthlyInstallment,
                     totalInterest = totalInterest,
                     totalRepayment = totalRepayment,
-                    interestRate = plafond.interestRate
-                )
+                    interestRate = plafond.interestRate,
+                ),
             )
         } else {
             _uiState.value = _uiState.value.copy(simulation = null)
@@ -149,7 +148,7 @@ class LoanViewModel @Inject constructor(
         val state = _uiState.value
         val amount = state.amountInput.toLongOrNull() ?: 0L
         val tenor = state.tenorInput.toIntOrNull() ?: 0
-        
+
         if (state.selectedPlafond == null) {
             _uiState.value = state.copy(error = "Pilih plafond terlebih dahulu")
             return
@@ -185,14 +184,14 @@ class LoanViewModel @Inject constructor(
                 plafondId = state.selectedPlafond.id.toLong(),
                 interestRate = state.selectedPlafond.interestRate,
                 latitude = state.latitude,
-                longitude = state.longitude
+                longitude = state.longitude,
             ).fold(
                 onSuccess = {
                     _uiState.value = state.copy(isLoading = false, success = true)
                 },
                 onFailure = { e ->
                     _uiState.value = state.copy(isLoading = false, error = e.message ?: "Gagal mengajukan pinjaman")
-                }
+                },
             )
         }
     }
@@ -200,7 +199,7 @@ class LoanViewModel @Inject constructor(
     fun resetState() {
         _uiState.value = LoanApplicationUiState(
             plafonds = _uiState.value.plafonds,
-            limits = _uiState.value.limits
+            limits = _uiState.value.limits,
         )
     }
 }

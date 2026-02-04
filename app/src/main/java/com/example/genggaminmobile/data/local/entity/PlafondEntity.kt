@@ -12,25 +12,27 @@ data class PlafondEntity(
     val maxAmount: Long,
     val tenorMonth: Int,
     val interestRate: Double,
-    val isActive: Boolean
+    val isActive: Boolean,
 )
 
-fun PlafondEntity.toDomain() = Plafond(
-    id = id,
-    title = title,
-    minIncome = minIncome,
-    maxAmount = maxAmount,
-    tenorMonth = tenorMonth,
-    interestRate = interestRate,
-    isActive = isActive
-)
+fun PlafondEntity.toDomain() =
+    Plafond(
+        id = id,
+        title = title,
+        minIncome = minIncome,
+        maxAmount = maxAmount,
+        tenorMonth = tenorMonth,
+        interestRate = interestRate,
+        isActive = isActive,
+    )
 
-fun Plafond.toEntity() = PlafondEntity(
-    id = id,
-    title = title,
-    minIncome = minIncome,
-    maxAmount = maxAmount,
-    tenorMonth = tenorMonth,
-    interestRate = interestRate,
-    isActive = isActive
-)
+fun Plafond.toEntity() =
+    PlafondEntity(
+        id = id,
+        title = title,
+        minIncome = minIncome,
+        maxAmount = maxAmount,
+        tenorMonth = tenorMonth,
+        interestRate = interestRate,
+        isActive = isActive,
+    )

@@ -17,28 +17,30 @@ data class LoanEntity(
     val date: String?,
     val isSynced: Boolean = true,
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
 )
 
-fun LoanEntity.toDomain() = Loan(
-    id = remoteId ?: localId,
-    amount = amount,
-    tenorMonths = tenorMonths,
-    purpose = purpose,
-    plafondId = plafondId,
-    status = status,
-    interestRate = interestRate,
-    date = date
-)
+fun LoanEntity.toDomain() =
+    Loan(
+        id = remoteId ?: localId,
+        amount = amount,
+        tenorMonths = tenorMonths,
+        purpose = purpose,
+        plafondId = plafondId,
+        status = status,
+        interestRate = interestRate,
+        date = date,
+    )
 
-fun Loan.toEntity(isSynced: Boolean = true) = LoanEntity(
-    remoteId = id,
-    amount = amount,
-    tenorMonths = tenorMonths,
-    purpose = purpose,
-    plafondId = plafondId,
-    status = status,
-    interestRate = interestRate,
-    date = date,
-    isSynced = isSynced
-)
+fun Loan.toEntity(isSynced: Boolean = true) =
+    LoanEntity(
+        remoteId = id,
+        amount = amount,
+        tenorMonths = tenorMonths,
+        purpose = purpose,
+        plafondId = plafondId,
+        status = status,
+        interestRate = interestRate,
+        date = date,
+        isSynced = isSynced,
+    )

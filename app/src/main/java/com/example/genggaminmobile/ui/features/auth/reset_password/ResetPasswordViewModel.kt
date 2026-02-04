@@ -19,13 +19,13 @@ data class ResetPasswordUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isSuccess: Boolean = false,
-    val successMessage: String? = null
+    val successMessage: String? = null,
 )
 
 @HiltViewModel
 class ResetPasswordViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ResetPasswordUiState())
@@ -52,7 +52,7 @@ class ResetPasswordViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Kata sandi tidak cocok") }
             return
         }
-        
+
         if (state.newPassword.length < 6) {
             _uiState.update { it.copy(error = "Kata sandi minimal 6 karakter") }
             return

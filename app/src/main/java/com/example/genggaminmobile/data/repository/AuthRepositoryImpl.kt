@@ -1,5 +1,6 @@
 package com.example.genggaminmobile.data.repository
 
+import com.example.genggaminmobile.core.network.ApiResponse
 import com.example.genggaminmobile.data.local.dao.LoanDao
 import com.example.genggaminmobile.data.local.dao.LoanLimitDao
 import com.example.genggaminmobile.data.local.dao.ProfileDao
@@ -7,11 +8,10 @@ import com.example.genggaminmobile.data.local.dao.UserDao
 import com.example.genggaminmobile.data.local.datastore.PreferencesManager
 import com.example.genggaminmobile.data.local.entity.UserEntity
 import com.example.genggaminmobile.data.model.dto.*
-import com.google.gson.Gson
-import com.example.genggaminmobile.core.network.ApiResponse
 import com.example.genggaminmobile.data.remote.api.AuthApi
 import com.example.genggaminmobile.domain.model.User
 import com.example.genggaminmobile.domain.repository.AuthRepository
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import retrofit2.HttpException
@@ -26,7 +26,7 @@ class AuthRepositoryImpl @Inject constructor(
     private val profileDao: ProfileDao,
     private val loanLimitDao: LoanLimitDao,
     private val preferencesManager: PreferencesManager,
-    private val gson: Gson
+    private val gson: Gson,
 ) : AuthRepository {
 
     private val SESSION_TIMEOUT = 24 * 60 * 60 * 1000L // 24 Hours in milliseconds
@@ -56,7 +56,7 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: HttpException) {
             val code = e.code()
             val errorBody = e.response()?.errorBody()?.string()
-            
+
             val errorMessage = try {
                 val apiResponse = gson.fromJson(errorBody, ApiResponse::class.java)
                 apiResponse.message
@@ -64,7 +64,7 @@ class AuthRepositoryImpl @Inject constructor(
                 if (code == 401) {
                     "Gagal memverifikasi akun Google. Silakan coba lagi."
                 } else {
-                    "Terjadi kesalahan server (${code})"
+                    "Terjadi kesalahan server ($code)"
                 }
             }
             Result.failure(Exception(errorMessage))
@@ -75,7 +75,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     private suspend fun handleLoginResponse(response: ApiResponse<LoginResponse>): Result<User> {
         val loginData = response.data ?: throw Exception("Data response kosong")
-        
+
         // Offline First: Save to local database
         userDao.insertUser(
             UserEntity(
@@ -83,21 +83,23 @@ class AuthRepositoryImpl @Inject constructor(
                 username = loginData.username,
                 email = loginData.email,
                 fullName = null,
-                isActive = loginData.isActive
-            )
+                isActive = loginData.isActive,
+            ),
         )
-        
+
         saveAuthToken(loginData.token)
-        
-        return Result.success(User(
-            id = loginData.id,
-            username = loginData.username,
-            email = loginData.email,
-            fullName = null,
-            isActive = loginData.isActive,
-            roles = emptyList(),
-            token = loginData.token
-        ))
+
+        return Result.success(
+            User(
+                id = loginData.id,
+                username = loginData.username,
+                email = loginData.email,
+                fullName = null,
+                isActive = loginData.isActive,
+                roles = emptyList(),
+                token = loginData.token,
+            ),
+        )
     }
 
     override suspend fun register(username: String, email: String, password: String, fullName: String): Result<Unit> {
@@ -107,7 +109,7 @@ class AuthRepositoryImpl @Inject constructor(
                 password = password,
                 email = email,
                 fullName = fullName,
-                roles = listOf("CUSTOMER")
+                roles = listOf("CUSTOMER"),
             )
             authApi.register(request)
             Result.success(Unit)
@@ -144,10 +146,10 @@ class AuthRepositoryImpl @Inject constructor(
             // Ideally we should warn the user, but for now I will strictly follow "clear data".
             // Actually, for a banking app, logout SHOULD clear local sensitive data to prevent others from seeing it.
             // Persisted unsynced loans should be sent before logout or lost.
-            
-            loanDao.clearLoans() 
+
+            loanDao.clearLoans()
             loanLimitDao.clearLimits()
-            
+
             preferencesManager.clear()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -158,20 +160,20 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getAuthToken(): Flow<String?> {
         return combine(
             preferencesManager.authToken,
-            preferencesManager.lastLoginTime
+            preferencesManager.lastLoginTime,
         ) { token, lastLoginTime ->
             val currentTime = System.currentTimeMillis()
-                if (token != null) {
-                    // Jika lastLoginTime 0 (error simpan/legacy), atau belum expired -> Return Token
-                    if (lastLoginTime == 0L || (currentTime - lastLoginTime) < SESSION_TIMEOUT) {
-                        token
-                    } else {
-                        // Session expired
-                        null
-                    }
+            if (token != null) {
+                // Jika lastLoginTime 0 (error simpan/legacy), atau belum expired -> Return Token
+                if (lastLoginTime == 0L || (currentTime - lastLoginTime) < SESSION_TIMEOUT) {
+                    token
                 } else {
+                    // Session expired
                     null
                 }
+            } else {
+                null
+            }
         }
     }
 

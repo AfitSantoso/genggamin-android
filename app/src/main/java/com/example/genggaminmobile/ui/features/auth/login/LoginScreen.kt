@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
-import androidx.credentials.exceptions.GetCredentialException
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.R
 import com.example.genggaminmobile.ui.components.inputs.CustomTextField
@@ -36,13 +35,13 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onForgotPasswordClick: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val credentialManager = remember { CredentialManager.create(context) }
-    
+
     // Web Client ID Terbaru (Web Application)
     val webClientId = "196871791222-5opu1hhd733juuvokltoq6jr3lidppia.apps.googleusercontent.com"
 
@@ -55,14 +54,14 @@ fun LoginScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.background,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 30.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Image(
                 painter = painterResource(id = R.drawable.genggamin),
@@ -70,7 +69,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(RoundedCornerShape(20.dp)),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -79,9 +78,9 @@ fun LoginScreen(
                 text = "Genggamin Mobile",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
+                    letterSpacing = 1.sp,
                 ),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -92,7 +91,7 @@ fun LoginScreen(
                 label = "Nama pengguna",
                 modifier = Modifier.fillMaxWidth(),
                 isError = uiState.error?.contains("Pengguna", ignoreCase = true) == true,
-                errorMessage = if (uiState.error?.contains("Pengguna", ignoreCase = true) == true) uiState.error else null
+                errorMessage = if (uiState.error?.contains("Pengguna", ignoreCase = true) == true) uiState.error else null,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -105,7 +104,7 @@ fun LoginScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 isError = uiState.error?.contains("sandi", ignoreCase = true) == true,
-                errorMessage = if (uiState.error?.contains("sandi", ignoreCase = true) == true) uiState.error else null
+                errorMessage = if (uiState.error?.contains("sandi", ignoreCase = true) == true) uiState.error else null,
             )
 
             if (uiState.error != null && uiState.error?.contains("sandi", ignoreCase = true) == false && uiState.error?.contains("Pengguna", ignoreCase = true) == false) {
@@ -113,17 +112,17 @@ fun LoginScreen(
                     text = uiState.error ?: "",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp).align(Alignment.Start)
+                    modifier = Modifier.padding(top = 8.dp).align(Alignment.Start),
                 )
             }
 
             TextButton(
                 onClick = onForgotPasswordClick,
-                modifier = Modifier.align(Alignment.End)
+                modifier = Modifier.align(Alignment.End),
             ) {
                 Text(
                     "Lupa kata sandi?",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                 )
             }
 
@@ -135,7 +134,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                enabled = !uiState.isLoading && uiState.username.isNotBlank() && uiState.password.isNotBlank()
+                enabled = !uiState.isLoading && uiState.username.isNotBlank() && uiState.password.isNotBlank(),
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
@@ -145,7 +144,7 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             OutlinedButton(
                 onClick = {
                     scope.launch {
@@ -163,7 +162,7 @@ fun LoginScreen(
 
                             val result = credentialManager.getCredential(
                                 context = context,
-                                request = request
+                                request = request,
                             )
 
                             val credential = result.credential
@@ -187,19 +186,19 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                enabled = !uiState.isLoading
+                enabled = !uiState.isLoading,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         painter = painterResource(id = R.drawable.google),
                         contentDescription = "Google Logo",
                         modifier = Modifier.size(24.dp),
-                        tint = Color.Unspecified
+                        tint = Color.Unspecified,
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         "Masuk dengan Google",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             }
@@ -209,19 +208,19 @@ fun LoginScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Belum punya akun?",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 TextButton(onClick = onNavigateToRegister) {
                     Text(
                         text = "Daftar sekarang",
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                            color = MaterialTheme.colorScheme.primary,
+                        ),
                     )
                 }
             }

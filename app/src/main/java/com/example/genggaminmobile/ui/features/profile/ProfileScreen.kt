@@ -50,7 +50,7 @@ import java.util.*
 fun ProfileScreen(
     onBack: () -> Unit,
     onLogout: () -> Unit,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
@@ -81,9 +81,9 @@ fun ProfileScreen(
         2 -> income.isNotEmpty() && occupation.isNotEmpty() && currentAddress.isNotEmpty() && motherName.isNotEmpty()
         3 -> bankAccount.isNotEmpty() && bankHolder.isNotEmpty()
         4 -> emergencyName.isNotEmpty() && emergencyRelation.isNotEmpty() && emergencyPhone.isNotEmpty()
-        5 -> (ktpFile != null || !uiState.profile?.ktpImagePath.isNullOrEmpty()) && 
-             (selfieFile != null || !uiState.profile?.selfieImagePath.isNullOrEmpty()) && 
-             (payslipFile != null || !uiState.profile?.payslipImagePath.isNullOrEmpty())
+        5 -> (ktpFile != null || !uiState.profile?.ktpImagePath.isNullOrEmpty()) &&
+            (selfieFile != null || !uiState.profile?.selfieImagePath.isNullOrEmpty()) &&
+            (payslipFile != null || !uiState.profile?.payslipImagePath.isNullOrEmpty())
         else -> false
     }
 
@@ -136,24 +136,24 @@ fun ProfileScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(padding),
         ) {
             AnimatedContent(
                 targetState = uiState.isLoading to (uiState.isEditing || uiState.profile == null),
                 transitionSpec = {
                     fadeIn() togetherWith fadeOut()
                 },
-                label = "ProfileContentTransition"
+                label = "ProfileContentTransition",
             ) { (isLoading, isEditingMode) ->
                 when {
                     isLoading -> {
@@ -166,36 +166,36 @@ fun ProfileScreen(
                             profile = uiState.profile!!,
                             onEdit = { viewModel.startEditing() },
                             currencyFormatter = currencyFormatter,
-                            lastUpdated = uiState.lastUpdated
+                            lastUpdated = uiState.lastUpdated,
                         )
                     }
                     else -> {
                         // Form Mode
                         Column(modifier = Modifier.fillMaxSize()) {
                             ModernStepIndicator(currentStep = uiState.currentStep, totalSteps = uiState.totalSteps)
-                            
+
                             LazyColumn(
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(horizontal = 20.dp),
                                 verticalArrangement = Arrangement.spacedBy(20.dp),
-                                contentPadding = PaddingValues(vertical = 16.dp)
+                                contentPadding = PaddingValues(vertical = 16.dp),
                             ) {
                                 item {
                                     Text(
                                         text = getStepTitle(uiState.currentStep),
                                         style = MaterialTheme.typography.headlineSmall,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onBackground
+                                        color = MaterialTheme.colorScheme.onBackground,
                                     )
                                     Text(
                                         text = "Mohon lengkapi semua bidang di bawah ini.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
-                                
+
                                 item {
                                     when (uiState.currentStep) {
                                         1 -> PersonalDataStep(nik, { nik = it }, dob, { dob = it }, pob, { pob = it }, address, { address = it }, phone, { phone = it })
@@ -203,11 +203,14 @@ fun ProfileScreen(
                                         3 -> BankDataStep(bankAccount, { bankAccount = it }, bankHolder, { bankHolder = it })
                                         4 -> EmergencyContactStep(emergencyName, { emergencyName = it }, emergencyRelation, { emergencyRelation = it }, emergencyPhone, { emergencyPhone = it })
                                         5 -> DocumentUploadStep(
-                                            ktpFile, { ktpFile = it },
-                                            selfieFile, { selfieFile = it },
-                                            payslipFile, { payslipFile = it },
+                                            ktpFile,
+                                            { ktpFile = it },
+                                            selfieFile,
+                                            { selfieFile = it },
+                                            payslipFile,
+                                            { payslipFile = it },
                                             existingProfile = uiState.profile,
-                                            lastUpdated = uiState.lastUpdated
+                                            lastUpdated = uiState.lastUpdated,
                                         )
                                     }
                                 }
@@ -217,25 +220,25 @@ fun ProfileScreen(
                             Surface(
                                 tonalElevation = 3.dp,
                                 modifier = Modifier.fillMaxWidth(),
-                                shadowElevation = 16.dp
+                                shadowElevation = 16.dp,
                             ) {
                                 Row(
                                     modifier = Modifier
                                         .padding(20.dp)
                                         .fillMaxWidth()
                                         .navigationBarsPadding(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     if (uiState.currentStep > 1) {
                                         OutlinedButton(
                                             onClick = { viewModel.previousStep() },
                                             modifier = Modifier.weight(1f).height(54.dp),
-                                            shape = RoundedCornerShape(16.dp)
+                                            shape = RoundedCornerShape(16.dp),
                                         ) {
                                             Text("Kembali", fontWeight = FontWeight.SemiBold)
                                         }
                                     }
-                                    
+
                                     Button(
                                         onClick = {
                                             if (uiState.currentStep < uiState.totalSteps) {
@@ -247,7 +250,7 @@ fun ProfileScreen(
                                                     occupation = occupation, currentAddress = currentAddress,
                                                     motherMaidenName = motherName, accountNumber = bankAccount,
                                                     accountHolderName = bankHolder,
-                                                    emergencyContact = EmergencyContactDto(name = emergencyName, relationship = emergencyRelation, phone = emergencyPhone)
+                                                    emergencyContact = EmergencyContactDto(name = emergencyName, relationship = emergencyRelation, phone = emergencyPhone),
                                                 )
                                                 viewModel.submitProfile(request, ktpFile, selfieFile, payslipFile)
                                             }
@@ -255,14 +258,14 @@ fun ProfileScreen(
                                         enabled = isStepValid && !uiState.isSubmitting, // Button is disabled if invalid or submitting
                                         modifier = Modifier.weight(if (uiState.currentStep > 1) 1.5f else 1f).height(54.dp),
                                         shape = RoundedCornerShape(16.dp),
-                                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                                     ) {
                                         if (uiState.isSubmitting) {
                                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                                         } else {
                                             Text(
                                                 if (uiState.currentStep == uiState.totalSteps) "Simpan Profil" else "Lanjut",
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
                                             )
                                         }
                                     }
@@ -281,11 +284,11 @@ fun ProfileSummaryView(
     profile: com.example.genggaminmobile.data.model.dto.CustomerProfileResponse,
     onEdit: () -> Unit,
     currencyFormatter: NumberFormat,
-    lastUpdated: Long
+    lastUpdated: Long,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp)
+        contentPadding = PaddingValues(bottom = 32.dp),
     ) {
         item {
             HeaderSection(profile)
@@ -294,7 +297,7 @@ fun ProfileSummaryView(
         item {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 ModernInfoCard(
                     title = "Data Pribadi",
                     icon = Icons.Outlined.Person,
@@ -303,8 +306,8 @@ fun ProfileSummaryView(
                         "Tanggal Lahir" to profile.dateOfBirth,
                         "Tempat Lahir" to profile.placeOfBirth,
                         "Telepon" to profile.customerPhone,
-                        "Alamat KTP" to profile.address
-                    )
+                        "Alamat KTP" to profile.address,
+                    ),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -315,8 +318,8 @@ fun ProfileSummaryView(
                     items = listOf(
                         "Pekerjaan" to profile.occupation,
                         "Pendapatan" to currencyFormatter.format(profile.monthlyIncome),
-                        "Nama Ibu" to profile.motherMaidenName
-                    )
+                        "Nama Ibu" to profile.motherMaidenName,
+                    ),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -326,8 +329,8 @@ fun ProfileSummaryView(
                     icon = Icons.Outlined.AccountBalance,
                     items = listOf(
                         "Nomor Rekening" to profile.accountNumber,
-                        "Nama Pemilik" to profile.accountHolderName
-                    )
+                        "Nama Pemilik" to profile.accountHolderName,
+                    ),
                 )
 
                 if (profile.emergencyContacts.isNotEmpty()) {
@@ -339,8 +342,8 @@ fun ProfileSummaryView(
                         items = listOf(
                             "Nama" to (ec?.name ?: "-"),
                             "Hubungan" to (ec?.relationship ?: "-"),
-                            "Telepon" to (ec?.phone ?: "-")
-                        )
+                            "Telepon" to (ec?.phone ?: "-"),
+                        ),
                     )
                 }
 
@@ -350,7 +353,7 @@ fun ProfileSummaryView(
                     ktpPath = profile.ktpImagePath,
                     selfiePath = profile.selfieImagePath,
                     payslipPath = profile.payslipImagePath,
-                    lastUpdated = lastUpdated
+                    lastUpdated = lastUpdated,
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -360,8 +363,8 @@ fun ProfileSummaryView(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -383,26 +386,26 @@ fun HeaderSection(profile: com.example.genggaminmobile.data.model.dto.CustomerPr
                 Brush.verticalGradient(
                     colors = listOf(
                         MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.primaryContainer
-                    )
-                )
-            )
+                        MaterialTheme.colorScheme.primaryContainer,
+                    ),
+                ),
+            ),
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Surface(
                 modifier = Modifier.size(90.dp).border(4.dp, Color.White.copy(alpha = 0.3f), CircleShape),
                 shape = CircleShape,
-                color = Color.White.copy(alpha = 0.2f)
+                color = Color.White.copy(alpha = 0.2f),
             ) {
                 Icon(
                     Icons.Default.Person,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.padding(20.dp)
+                    modifier = Modifier.padding(20.dp),
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -410,24 +413,24 @@ fun HeaderSection(profile: com.example.genggaminmobile.data.model.dto.CustomerPr
                 text = profile.fullName ?: "Pengguna Genggamin",
                 style = MaterialTheme.typography.titleLarge,
                 color = Color.White,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = profile.email ?: "-",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.8f)
+                color = Color.White.copy(alpha = 0.8f),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
                 color = Color.White.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp),
             ) {
                 Text(
                     "Verified Member",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     color = Color.White,
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -439,7 +442,7 @@ fun ModernInfoCard(title: String, icon: ImageVector, items: List<Pair<String, St
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -451,7 +454,7 @@ fun ModernInfoCard(title: String, icon: ImageVector, items: List<Pair<String, St
             items.forEachIndexed { index, (label, value) ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                     Text(value, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
@@ -469,7 +472,7 @@ fun ModernDocumentSection(ktpPath: String?, selfiePath: String?, payslipPath: St
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -496,7 +499,7 @@ fun DocumentItem(label: String, url: String?, lastUpdated: Long, modifier: Modif
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             if (!url.isNullOrBlank()) {
                 AsyncImage(
@@ -506,7 +509,7 @@ fun DocumentItem(label: String, url: String?, lastUpdated: Long, modifier: Modif
                         .build(),
                     contentDescription = label,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             } else {
                 Icon(Icons.Outlined.ImageNotSupported, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
@@ -521,7 +524,7 @@ fun DocumentItem(label: String, url: String?, lastUpdated: Long, modifier: Modif
 fun ModernStepIndicator(currentStep: Int, totalSteps: Int) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         repeat(totalSteps) { index ->
             val step = index + 1
@@ -531,9 +534,12 @@ fun ModernStepIndicator(currentStep: Int, totalSteps: Int) {
                     .height(6.dp)
                     .clip(CircleShape)
                     .background(
-                        if (step <= currentStep) MaterialTheme.colorScheme.primary 
-                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                    )
+                        if (step <= currentStep) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        },
+                    ),
             )
         }
     }
@@ -553,7 +559,7 @@ fun ModernSuccessDialog(onDismiss: () -> Unit) {
         },
         title = { Text("Berhasil!", fontWeight = FontWeight.Bold) },
         text = { Text("Profil Anda telah berhasil diperbarui. Data sudah aman tersimpan.") },
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(28.dp),
     )
 }
 
@@ -561,12 +567,12 @@ fun ModernSuccessDialog(onDismiss: () -> Unit) {
 fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, onDobChange: (String) -> Unit, pob: String, onPobChange: (String) -> Unit, address: String, onAddressChange: (String) -> Unit, phone: String, onPhoneChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(value = nik, onValueChange = onNikChange, label = "NIK (Wajib 16 Digit)", icon = Icons.Outlined.Badge, keyboardType = KeyboardType.Number)
-        
+
         // Date of Birth with DatePicker
         val calendar = java.util.Calendar.getInstance()
         calendar.add(java.util.Calendar.YEAR, -18)
         val maxDate = calendar.timeInMillis
-        
+
         ModernDatePickerField(
             value = dob,
             onValueChange = onDobChange,
@@ -579,9 +585,9 @@ fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, on
                 override fun isSelectableYear(year: Int): Boolean {
                     return year <= calendar.get(java.util.Calendar.YEAR)
                 }
-            }
+            },
         )
-        
+
         ModernTextField(value = pob, onValueChange = onPobChange, label = "Tempat Lahir", icon = Icons.Outlined.Place)
         ModernTextField(value = address, onValueChange = onAddressChange, label = "Alamat Sesuai KTP", icon = Icons.Outlined.Home, singleLine = false, minLines = 2)
         ModernTextField(value = phone, onValueChange = onPhoneChange, label = "Nomor Telepon", icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
@@ -595,7 +601,7 @@ fun ModernDatePickerField(
     onValueChange: (String) -> Unit,
     label: String,
     icon: ImageVector,
-    selectableDates: SelectableDates = DatePickerDefaults.AllDates
+    selectableDates: SelectableDates = DatePickerDefaults.AllDates,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(selectableDates = selectableDates)
@@ -608,7 +614,7 @@ fun ModernDatePickerField(
             readOnly = true,
             label = { Text(label) },
             leadingIcon = { Icon(icon, null, modifier = Modifier.size(20.dp)) },
-            trailingIcon = { 
+            trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
                     Icon(Icons.Default.CalendarToday, null, modifier = Modifier.size(20.dp))
                 }
@@ -623,15 +629,15 @@ fun ModernDatePickerField(
                 disabledTrailingIconColor = MaterialTheme.colorScheme.primary,
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledContainerColor = Color.Transparent
-            )
+                disabledContainerColor = Color.Transparent,
+            ),
         )
-        
+
         // Invisible overlay to capture clicks since the field is disabled
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .clickable { showDatePicker = true }
+                .clickable { showDatePicker = true },
         )
     }
 
@@ -648,7 +654,7 @@ fun ModernDatePickerField(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) { Text("Batal") }
-            }
+            },
         ) {
             DatePicker(state = datePickerState)
         }
@@ -684,11 +690,14 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
 
 @Composable
 fun DocumentUploadStep(
-    ktp: File?, onKtpSelect: (File) -> Unit,
-    selfie: File?, onSelfieSelect: (File) -> Unit,
-    payslip: File?, onPayslipSelect: (File) -> Unit,
+    ktp: File?,
+    onKtpSelect: (File) -> Unit,
+    selfie: File?,
+    onSelfieSelect: (File) -> Unit,
+    payslip: File?,
+    onPayslipSelect: (File) -> Unit,
     existingProfile: com.example.genggaminmobile.data.model.dto.CustomerProfileResponse? = null,
-    lastUpdated: Long = 0
+    lastUpdated: Long = 0,
 ) {
     val context = LocalContext.current
     var showSheetForKtp by remember { mutableStateOf(false) }
@@ -746,43 +755,67 @@ fun DocumentUploadStep(
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernUploadItem(
-            label = "Foto KTP", 
+            label = "Foto KTP",
             isUploaded = ktp != null || !existingProfile?.ktpImagePath.isNullOrEmpty(),
             previewPath = ktp?.absolutePath ?: existingProfile?.ktpImagePath,
             lastUpdated = lastUpdated,
-            onClick = { showSheetForKtp = true }
+            onClick = { showSheetForKtp = true },
         )
         ModernUploadItem(
-            label = "Foto Selfie + KTP", 
+            label = "Foto Selfie + KTP",
             isUploaded = selfie != null || !existingProfile?.selfieImagePath.isNullOrEmpty(),
             previewPath = selfie?.absolutePath ?: existingProfile?.selfieImagePath,
             lastUpdated = lastUpdated,
-            onClick = { showSheetForSelfie = true }
+            onClick = { showSheetForSelfie = true },
         )
         ModernUploadItem(
-            label = "Foto Slip Gaji", 
+            label = "Foto Slip Gaji",
             isUploaded = payslip != null || !existingProfile?.payslipImagePath.isNullOrEmpty(),
             previewPath = payslip?.absolutePath ?: existingProfile?.payslipImagePath,
             lastUpdated = lastUpdated,
-            onClick = { showSheetForPayslip = true }
+            onClick = { showSheetForPayslip = true },
         )
     }
 
-    if (showSheetForKtp) ImagePickerSheet(
-        onDismiss = { showSheetForKtp = false },
-        onCamera = { launchCamera("ktp"); showSheetForKtp = false },
-        onGallery = { launchGallery("ktp"); showSheetForKtp = false }
-    )
-    if (showSheetForSelfie) ImagePickerSheet(
-        onDismiss = { showSheetForSelfie = false },
-        onCamera = { launchCamera("selfie"); showSheetForSelfie = false },
-        onGallery = { launchGallery("selfie"); showSheetForSelfie = false }
-    )
-    if (showSheetForPayslip) ImagePickerSheet(
-        onDismiss = { showSheetForPayslip = false },
-        onCamera = { launchCamera("payslip"); showSheetForPayslip = false },
-        onGallery = { launchGallery("payslip"); showSheetForPayslip = false }
-    )
+    if (showSheetForKtp) {
+        ImagePickerSheet(
+            onDismiss = { showSheetForKtp = false },
+            onCamera = {
+                launchCamera("ktp")
+                showSheetForKtp = false
+            },
+            onGallery = {
+                launchGallery("ktp")
+                showSheetForKtp = false
+            },
+        )
+    }
+    if (showSheetForSelfie) {
+        ImagePickerSheet(
+            onDismiss = { showSheetForSelfie = false },
+            onCamera = {
+                launchCamera("selfie")
+                showSheetForSelfie = false
+            },
+            onGallery = {
+                launchGallery("selfie")
+                showSheetForSelfie = false
+            },
+        )
+    }
+    if (showSheetForPayslip) {
+        ImagePickerSheet(
+            onDismiss = { showSheetForPayslip = false },
+            onCamera = {
+                launchCamera("payslip")
+                showSheetForPayslip = false
+            },
+            onGallery = {
+                launchGallery("payslip")
+                showSheetForPayslip = false
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -820,18 +853,18 @@ fun uriToFile(context: Context, uri: Uri): File {
 
 @Composable
 fun ModernUploadItem(
-    label: String, 
-    isUploaded: Boolean, 
+    label: String,
+    isUploaded: Boolean,
     previewPath: String? = null,
     lastUpdated: Long = 0,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().height(100.dp),
         shape = RoundedCornerShape(20.dp),
         color = if (isUploaded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+        border = BorderStroke(1.dp, if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -839,7 +872,7 @@ fun ModernUploadItem(
                     .size(64.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 if (!previewPath.isNullOrEmpty()) {
                     AsyncImage(
@@ -849,12 +882,12 @@ fun ModernUploadItem(
                             .build(),
                         contentDescription = label,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
                     )
                     // Overlay check icon for better UX
                     Box(
                         modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(24.dp))
                     }
@@ -862,7 +895,7 @@ fun ModernUploadItem(
                     Icon(
                         imageVector = Icons.Outlined.FileUpload,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -870,9 +903,9 @@ fun ModernUploadItem(
             Column {
                 Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    text = if (isUploaded) "Dokumen sudah tersedia" else "Ketuk untuk unggah", 
-                    style = MaterialTheme.typography.bodySmall, 
-                    color = if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    text = if (isUploaded) "Dokumen sudah tersedia" else "Ketuk untuk unggah",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -888,7 +921,7 @@ fun ModernTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     prefix: String? = null,
     singleLine: Boolean = true,
-    minLines: Int = 1
+    minLines: Int = 1,
 ) {
     OutlinedTextField(
         value = value,
@@ -898,18 +931,22 @@ fun ModernTextField(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        prefix = if (prefix != null) { { Text(prefix) } } else null,
+        prefix = if (prefix != null) {
+            { Text(prefix) }
+        } else {
+            null
+        },
         singleLine = singleLine,
         minLines = minLines,
         colors = OutlinedTextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-        )
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+        ),
     )
 }
 
-fun getStepTitle(step: Int) = when(step) {
+fun getStepTitle(step: Int) = when (step) {
     1 -> "Data Pribadi"
     2 -> "Informasi Keuangan"
     3 -> "Data Rekening"
@@ -921,7 +958,7 @@ fun getStepTitle(step: Int) = when(step) {
 @Composable
 fun OccupationInput(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     val options = listOf(
         "Karyawan Swasta Tetap",
@@ -931,7 +968,7 @@ fun OccupationInput(
         "Profesional (Dokter, Akuntan, dll)",
         "Freelancer / Driver Online",
         "Pensiunan",
-        "Lainnya"
+        "Lainnya",
     )
 
     var expanded by remember { mutableStateOf(false) }
@@ -963,8 +1000,8 @@ fun OccupationInput(
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
-                )
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
             )
         } else {
             // Dropdown Mode
@@ -987,22 +1024,22 @@ fun OccupationInput(
                     disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
             )
 
             // Overlay for click
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable { expanded = true }
+                    .clickable { expanded = true },
             )
 
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface),
             ) {
                 options.forEach { option ->
                     DropdownMenuItem(
@@ -1016,7 +1053,7 @@ fun OccupationInput(
                                 internalManualMode = false
                                 onValueChange(option)
                             }
-                        }
+                        },
                     )
                 }
             }
