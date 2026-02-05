@@ -224,9 +224,8 @@ fun ProfileScreen(
                             ) {
                                 Row(
                                     modifier = Modifier
-                                        .padding(20.dp)
-                                        .fillMaxWidth()
-                                        .navigationBarsPadding(),
+                                        .padding(horizontal = 20.dp, vertical = 8.dp)
+                                        .fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
                                     if (uiState.currentStep > 1) {
@@ -286,85 +285,96 @@ fun ProfileSummaryView(
     currencyFormatter: NumberFormat,
     lastUpdated: Long,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 32.dp),
-    ) {
-        item {
-            HeaderSection(profile)
-        }
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = 16.dp),
+        ) {
+            item {
+                HeaderSection(profile)
+            }
 
-        item {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Spacer(modifier = Modifier.height(24.dp))
+            item {
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                ModernInfoCard(
-                    title = "Data Pribadi",
-                    icon = Icons.Outlined.Person,
-                    items = listOf(
-                        "NIK" to profile.nik,
-                        "Tanggal Lahir" to profile.dateOfBirth,
-                        "Tempat Lahir" to profile.placeOfBirth,
-                        "Telepon" to profile.customerPhone,
-                        "Alamat KTP" to profile.address,
-                    ),
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ModernInfoCard(
-                    title = "Data Keuangan",
-                    icon = Icons.Outlined.AccountBalanceWallet,
-                    items = listOf(
-                        "Pekerjaan" to profile.occupation,
-                        "Pendapatan" to currencyFormatter.format(profile.monthlyIncome),
-                        "Nama Ibu" to profile.motherMaidenName,
-                    ),
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ModernInfoCard(
-                    title = "Rekening Bank",
-                    icon = Icons.Outlined.AccountBalance,
-                    items = listOf(
-                        "Nomor Rekening" to profile.accountNumber,
-                        "Nama Pemilik" to profile.accountHolderName,
-                    ),
-                )
-
-                if (profile.emergencyContacts.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    val ec = profile.emergencyContacts.firstOrNull()
                     ModernInfoCard(
-                        title = "Kontak Darurat",
-                        icon = Icons.Outlined.ContactPhone,
+                        title = "Data Pribadi",
+                        icon = Icons.Outlined.Person,
                         items = listOf(
-                            "Nama" to (ec?.name ?: "-"),
-                            "Hubungan" to (ec?.relationship ?: "-"),
-                            "Telepon" to (ec?.phone ?: "-"),
+                            "NIK" to profile.nik,
+                            "Tanggal Lahir" to profile.dateOfBirth,
+                            "Tempat Lahir" to profile.placeOfBirth,
+                            "Telepon" to profile.customerPhone,
+                            "Alamat KTP" to profile.address,
                         ),
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ModernInfoCard(
+                        title = "Data Keuangan",
+                        icon = Icons.Outlined.AccountBalanceWallet,
+                        items = listOf(
+                            "Pekerjaan" to profile.occupation,
+                            "Pendapatan" to currencyFormatter.format(profile.monthlyIncome),
+                            "Nama Ibu" to profile.motherMaidenName,
+                        ),
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ModernInfoCard(
+                        title = "Rekening Bank",
+                        icon = Icons.Outlined.AccountBalance,
+                        items = listOf(
+                            "Nomor Rekening" to profile.accountNumber,
+                            "Nama Pemilik" to profile.accountHolderName,
+                        ),
+                    )
+
+                    if (profile.emergencyContacts.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        val ec = profile.emergencyContacts.firstOrNull()
+                        ModernInfoCard(
+                            title = "Kontak Darurat",
+                            icon = Icons.Outlined.ContactPhone,
+                            items = listOf(
+                                "Nama" to (ec?.name ?: "-"),
+                                "Hubungan" to (ec?.relationship ?: "-"),
+                                "Telepon" to (ec?.phone ?: "-"),
+                            ),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ModernDocumentSection(
+                        ktpPath = profile.ktpImagePath,
+                        selfiePath = profile.selfieImagePath,
+                        payslipPath = profile.payslipImagePath,
+                        lastUpdated = lastUpdated,
+                    )
                 }
+            }
+        }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                ModernDocumentSection(
-                    ktpPath = profile.ktpImagePath,
-                    selfiePath = profile.selfieImagePath,
-                    payslipPath = profile.payslipImagePath,
-                    lastUpdated = lastUpdated,
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
+        // Bottom Button - Fixed at bottom
+        Surface(
+            tonalElevation = 3.dp,
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 16.dp,
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .fillMaxWidth(),
+            ) {
                 Button(
                     onClick = onEdit,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(54.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))

@@ -20,10 +20,23 @@ data class NotificationListResponse(
 
 data class NotificationPageData(
     @SerializedName("content") val content: List<NotificationDto>,
+    @SerializedName("totalPages") val totalPages: Int = 0,
+    @SerializedName("totalElements") val totalElements: Long = 0,
+    @SerializedName("last") val last: Boolean = true,
+    @SerializedName("first") val first: Boolean = true,
+    @SerializedName("empty") val empty: Boolean = true,
+    @SerializedName("number") val number: Int = 0,
+    @SerializedName("size") val size: Int = 20,
 )
 
 data class NotificationResponse(
     @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String,
-    @SerializedName("data") val data: NotificationDto?,
+    @SerializedName("data") val data: Any?,
+)
+
+data class UnreadCountResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: Int,
 )
