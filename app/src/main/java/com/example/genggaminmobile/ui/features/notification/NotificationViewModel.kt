@@ -55,7 +55,7 @@ constructor(
     fun loadNotifications() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null, hasError = false) }
-            
+
             notificationRepository.getNotifications(page = 0, size = PAGE_SIZE).fold(
                 onSuccess = { result ->
                     _uiState.update {
@@ -72,14 +72,14 @@ constructor(
                 },
                 onFailure = { e ->
                     val errorMessage = when {
-                        e.message?.contains("401") == true || 
-                        e.message?.contains("Unauthorized") == true ||
-                        e.message?.contains("authentication", ignoreCase = true) == true -> 
+                        e.message?.contains("401") == true ||
+                            e.message?.contains("Unauthorized") == true ||
+                            e.message?.contains("authentication", ignoreCase = true) == true ->
                             "Silakan login terlebih dahulu untuk melihat notifikasi"
                         e.message?.contains("timeout", ignoreCase = true) == true ->
                             "Koneksi timeout. Periksa jaringan Anda"
                         e.message?.contains("Unable to resolve host") == true ||
-                        e.message?.contains("No address associated") == true ->
+                            e.message?.contains("No address associated") == true ->
                             "Tidak dapat terhubung ke server. Periksa koneksi internet Anda"
                         else -> e.message ?: "Gagal memuat notifikasi"
                     }

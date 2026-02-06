@@ -40,6 +40,7 @@ fun HomeScreen(
     onNavigateToLoanApp: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToHelp: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
 ) {
@@ -178,7 +179,7 @@ fun HomeScreen(
                 QuickActionItem(
                     icon = Icons.Default.ContactSupport,
                     label = "Bantuan",
-                    onClick = { /* Help */ },
+                    onClick = onNavigateToHelp,
                 )
                 QuickActionItem(
                     icon = IfLogedIn(uiState.isLoggedIn, Icons.Default.Logout, Icons.Default.Login),

@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.genggaminmobile.core.service.LoanTimerService
-import com.example.genggaminmobile.data.local.datastore.TimerPreferencesManager
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
@@ -36,34 +35,34 @@ import java.util.*
 fun LoanProgressTrackerScreen(
     loanId: Long,
     onBack: () -> Unit,
-    viewModel: LoanProgressViewModel = hiltViewModel()
+    viewModel: LoanProgressViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
+
     // Start tracking and foreground service
     LaunchedEffect(loanId, uiState.submissionTime) {
         viewModel.startTracking(loanId)
-        
+
         // Start Foreground Service when we have submission time
         // Only start if status is not final (still processing)
         val normalizedStatus = uiState.status.lowercase()
         val isFinalStatus = normalizedStatus in listOf("approved", "disbursed", "rejected", "cair", "disetujui", "ditolak")
-        
+
         if (uiState.submissionTime != null && !isFinalStatus) {
             LoanTimerService.startService(
                 context = context,
                 loanId = loanId,
-                submissionTime = uiState.submissionTime!!
+                submissionTime = uiState.submissionTime!!,
             )
         }
     }
-    
+
     // Stop service when final status is reached
     LaunchedEffect(uiState.status) {
         val normalizedStatus = uiState.status.lowercase()
         val isFinalStatus = normalizedStatus in listOf("approved", "disbursed", "rejected", "cair", "disetujui", "ditolak")
-        
+
         if (isFinalStatus) {
             LoanTimerService.stopService(context)
         }
@@ -76,7 +75,7 @@ fun LoanProgressTrackerScreen(
                     Text(
                         "Status Pengajuan",
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.5.sp
+                        letterSpacing = 0.5.sp,
                     )
                 },
                 navigationIcon = {
@@ -85,11 +84,11 @@ fun LoanProgressTrackerScreen(
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                    containerColor = Color.Transparent,
+                ),
             )
         },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
             modifier = Modifier
@@ -97,30 +96,30 @@ fun LoanProgressTrackerScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Countdown Timer Card - Now uses persistent end time
             CountdownCard(
                 context = context,
                 loanId = loanId,
                 startTime = uiState.submissionTime,
-                status = uiState.status
+                status = uiState.status,
             )
-            
+
             // Progress Pulse Animation
             ProgressPulseSection(
                 currentStep = uiState.currentStep,
                 status = uiState.status,
-                statusMessage = uiState.statusMessage
+                statusMessage = uiState.statusMessage,
             )
-            
+
             // Detailed Progress Steps
             DetailedProgressSteps(
                 currentStep = uiState.currentStep,
                 status = uiState.status,
-                steps = uiState.progressSteps
+                steps = uiState.progressSteps,
             )
-            
+
             // Informasi Tambahan
             InfoCard()
         }
@@ -132,12 +131,12 @@ fun CountdownCard(
     context: Context,
     loanId: Long,
     startTime: Long?,
-    status: String
+    status: String,
 ) {
     val targetTimeMinutes = 10
     val normalizedStatus = status.lowercase()
     val isFinalStatus = normalizedStatus in listOf("approved", "disbursed", "rejected", "cair", "disetujui", "ditolak")
-    
+
     // BEST PRACTICE: Simpan END TIME bukan sisa detik
     // Menghitung endTime = startTime + 10 menit
     val endTime = remember(startTime) {
@@ -147,22 +146,22 @@ fun CountdownCard(
             System.currentTimeMillis() + (targetTimeMinutes * 60 * 1000L)
         }
     }
-    
+
     // Calculate remaining time from END TIME (ini yang penting!)
     // Tidak peduli aplikasi mati/restart, endTime tetap sama
     var remainingSeconds by remember { mutableStateOf(0) }
-    
+
     // Update remaining time setiap detik berdasarkan END TIME
     LaunchedEffect(endTime, isFinalStatus) {
         if (!isFinalStatus && endTime > 0) {
             while (true) {
                 val currentTime = System.currentTimeMillis()
                 val remaining = endTime - currentTime
-                
+
                 remainingSeconds = if (remaining > 0) (remaining / 1000).toInt() else 0
-                
+
                 if (remainingSeconds <= 0) break
-                
+
                 delay(1000L)
             }
         } else if (isFinalStatus) {
@@ -170,11 +169,11 @@ fun CountdownCard(
             remainingSeconds = 0
         }
     }
-    
+
     val minutes = remainingSeconds / 60
     val seconds = remainingSeconds % 60
     val progress = 1f - (remainingSeconds.toFloat() / (targetTimeMinutes * 60))
-    
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,22 +188,22 @@ fun CountdownCard(
                                 listOf(Color(0xFFF44336), Color(0xFFC62828))
                             else -> listOf(
                                 MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.tertiary
+                                MaterialTheme.colorScheme.tertiary,
                             )
                         }
                     } else {
                         listOf(
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.tertiary
+                            MaterialTheme.colorScheme.tertiary,
                         )
-                    }
-                )
+                    },
+                ),
             )
-            .padding(20.dp)
+            .padding(20.dp),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(
                 when {
@@ -214,11 +213,11 @@ fun CountdownCard(
                 },
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Text(
                 when {
                     normalizedStatus in listOf("approved", "disbursed", "disetujui", "cair") -> "Pengajuan Disetujui!"
@@ -227,11 +226,11 @@ fun CountdownCard(
                 },
                 color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 when {
                     isFinalStatus -> when {
@@ -245,12 +244,12 @@ fun CountdownCard(
                 color = Color.White,
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Black,
-                letterSpacing = 2.sp
+                letterSpacing = 2.sp,
             )
-            
+
             if (!isFinalStatus) {
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 LinearProgressIndicator(
                     progress = { progress.coerceIn(0f, 1f) },
                     modifier = Modifier
@@ -258,24 +257,24 @@ fun CountdownCard(
                         .height(6.dp)
                         .clip(RoundedCornerShape(3.dp)),
                     color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.3f)
+                    trackColor = Color.White.copy(alpha = 0.3f),
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
                         "Mulai",
                         color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
                     )
                     Text(
                         "10 Menit",
                         color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall
+                        style = MaterialTheme.typography.labelSmall,
                     )
                 }
             }
@@ -287,7 +286,7 @@ fun CountdownCard(
 fun ProgressPulseSection(
     currentStep: Int,
     status: String,
-    statusMessage: String
+    statusMessage: String,
 ) {
     Column(
         modifier = Modifier
@@ -295,28 +294,28 @@ fun ProgressPulseSection(
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
             .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AnimatedProgressIcon(currentStep = currentStep, status = status)
-        
+
         Spacer(modifier = Modifier.height(20.dp))
-        
+
         Text(
             statusMessage,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Text(
             getDetailedMessage(currentStep, status),
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 20.sp
+            lineHeight = 20.sp,
         )
     }
 }
@@ -329,14 +328,14 @@ fun AnimatedProgressIcon(currentStep: Int, status: String) {
         targetValue = 1.15f,
         animationSpec = infiniteRepeatable(
             animation = tween(1000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse,
         ),
-        label = "scale"
+        label = "scale",
     )
-    
+
     Box(
         modifier = Modifier.size(100.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         val normalizedStatus = status.lowercase()
         // Pulse animation active unless final final state (Disbursed or Rejected)
@@ -348,11 +347,11 @@ fun AnimatedProgressIcon(currentStep: Int, status: String) {
                     .scale(scale)
                     .background(
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        CircleShape
-                    )
+                        CircleShape,
+                    ),
             )
         }
-        
+
         Box(
             modifier = Modifier
                 .size(70.dp)
@@ -362,9 +361,9 @@ fun AnimatedProgressIcon(currentStep: Int, status: String) {
                         "rejected", "ditolak" -> Color(0xFFF44336).copy(alpha = 0.15f)
                         else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                     },
-                    CircleShape
+                    CircleShape,
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = getStepIcon(currentStep, status),
@@ -374,7 +373,7 @@ fun AnimatedProgressIcon(currentStep: Int, status: String) {
                     "approved", "disbursed", "disetujui", "cair" -> Color(0xFF4CAF50)
                     "rejected", "ditolak" -> Color(0xFFF44336)
                     else -> MaterialTheme.colorScheme.primary
-                }
+                },
             )
         }
     }
@@ -384,20 +383,20 @@ fun AnimatedProgressIcon(currentStep: Int, status: String) {
 fun DetailedProgressSteps(
     currentStep: Int,
     status: String,
-    steps: List<ProgressStep>
+    steps: List<ProgressStep>,
 ) {
     val normalizedStatus = status.lowercase()
-    
+
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             "Proses Pengajuan",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.ExtraBold,
         )
-        
+
         steps.forEachIndexed { index, step ->
             // Determine step status based on current progress
             val stepStatus = when {
@@ -409,10 +408,10 @@ fun DetailedProgressSteps(
                         else -> StepStatus.PENDING
                     }
                 }
-                
+
                 // DISBURSED - all steps are completed
                 normalizedStatus in listOf("disbursed", "cair") -> StepStatus.COMPLETED
-                
+
                 // APPROVED - steps 0,1,2 are completed, step 3 is processing (waiting for disburse)
                 normalizedStatus in listOf("approved", "disetujui") -> {
                     when {
@@ -421,7 +420,7 @@ fun DetailedProgressSteps(
                         else -> StepStatus.PENDING
                     }
                 }
-                
+
                 // UNDER_REVIEW - steps 0 and 1 are completed, step 2 is processing
                 normalizedStatus in listOf("under_review", "proses_verifikasi") -> {
                     when {
@@ -430,7 +429,7 @@ fun DetailedProgressSteps(
                         else -> StepStatus.PENDING
                     }
                 }
-                
+
                 // SUBMITTED/PENDING - use currentStep from ViewModel
                 normalizedStatus in listOf("submitted", "pending", "menunggu") -> {
                     when {
@@ -439,7 +438,7 @@ fun DetailedProgressSteps(
                         else -> StepStatus.PENDING
                     }
                 }
-                
+
                 // Default fallback
                 else -> {
                     when {
@@ -449,12 +448,12 @@ fun DetailedProgressSteps(
                     }
                 }
             }
-            
+
             ProgressStepItem(
                 step = step,
                 isActive = stepStatus == StepStatus.PROCESSING,
                 isCompleted = stepStatus == StepStatus.COMPLETED,
-                isFailed = stepStatus == StepStatus.FAILED
+                isFailed = stepStatus == StepStatus.FAILED,
             )
         }
     }
@@ -462,10 +461,10 @@ fun DetailedProgressSteps(
 
 // Helper enum for step status
 private enum class StepStatus {
-    PENDING,      // Not yet started (gray)
-    PROCESSING,   // Currently processing (blue with spinner)
-    COMPLETED,    // Done (green with checkmark)
-    FAILED        // Rejected (red with X)
+    PENDING, // Not yet started (gray)
+    PROCESSING, // Currently processing (blue with spinner)
+    COMPLETED, // Done (green with checkmark)
+    FAILED, // Rejected (red with X)
 }
 
 @Composable
@@ -473,7 +472,7 @@ fun ProgressStepItem(
     step: ProgressStep,
     isActive: Boolean,
     isCompleted: Boolean,
-    isFailed: Boolean
+    isFailed: Boolean,
 ) {
     Row(
         modifier = Modifier
@@ -485,10 +484,10 @@ fun ProgressStepItem(
                     isCompleted -> Color(0xFF4CAF50).copy(alpha = 0.15f) // Hijau jika sudah ada timestamp/lewat
                     isActive -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
                     else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                }
+                },
             )
             .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
@@ -500,9 +499,9 @@ fun ProgressStepItem(
                         isActive -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.surfaceVariant
                     },
-                    CircleShape
+                    CircleShape,
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = when {
@@ -511,14 +510,17 @@ fun ProgressStepItem(
                     else -> step.icon
                 },
                 contentDescription = null,
-                tint = if (isCompleted || isActive || isFailed) Color.White 
-                       else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(22.dp)
+                tint = if (isCompleted || isActive || isFailed) {
+                    Color.White
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(22.dp),
             )
         }
-        
+
         Spacer(modifier = Modifier.width(14.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 step.title,
@@ -529,34 +531,37 @@ fun ProgressStepItem(
                     isCompleted -> Color(0xFF1B5E20) // Hijau Tua
                     isActive -> MaterialTheme.colorScheme.primary
                     else -> MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                },
             )
-            
+
             if (isActive) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     step.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            
+
             if (step.timestamp != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     formatTimestamp(step.timestamp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isCompleted) Color(0xFF2E7D32).copy(alpha = 0.8f) 
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = if (isCompleted) {
+                        Color(0xFF2E7D32).copy(alpha = 0.8f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    },
                 )
             }
         }
-        
+
         if (isActive && !isFailed && !isCompleted) {
             CircularProgressIndicator(
                 modifier = Modifier.size(22.dp),
                 strokeWidth = 2.5.dp,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -570,20 +575,20 @@ fun InfoCard() {
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
             .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             Icons.Default.Info,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(22.dp)
+            modifier = Modifier.size(22.dp),
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             "Target kami adalah 10 menit dari pengajuan hingga keputusan!",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 18.sp
+            lineHeight = 18.sp,
         )
     }
 }

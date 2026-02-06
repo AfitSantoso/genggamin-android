@@ -14,14 +14,14 @@ import javax.inject.Singleton
  */
 @Singleton
 class TimerPreferencesManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
 ) {
     companion object {
         private const val PREF_NAME = "loan_timer_prefs"
         private const val KEY_END_TIME = "timer_end_time"
         private const val KEY_LOAN_ID = "timer_loan_id"
         private const val KEY_IS_TIMER_ACTIVE = "is_timer_active"
-        
+
         // Timer duration: 10 minutes in milliseconds
         const val TIMER_DURATION_MS = 10 * 60 * 1000L
     }
@@ -74,7 +74,7 @@ class TimerPreferencesManager @Inject constructor(
     fun getRemainingSeconds(): Int {
         val endTime = getEndTime()
         if (endTime == 0L) return 0
-        
+
         val remaining = endTime - System.currentTimeMillis()
         return if (remaining > 0) (remaining / 1000).toInt() else 0
     }

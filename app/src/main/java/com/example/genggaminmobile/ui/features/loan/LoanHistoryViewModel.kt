@@ -33,14 +33,14 @@ constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoanHistoryUiState())
     val uiState: StateFlow<LoanHistoryUiState> = _uiState.asStateFlow()
-    
+
     private var pollingJob: kotlinx.coroutines.Job? = null
 
     init {
         loadLoans()
         startPolling()
     }
-    
+
     private fun startPolling() {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
@@ -55,7 +55,7 @@ constructor(
             }
         }
     }
-    
+
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
@@ -151,7 +151,7 @@ constructor(
                             cancelError = error.message ?: "Gagal membatalkan pengajuan",
                         )
                     }
-                }
+                },
             )
         }
     }
