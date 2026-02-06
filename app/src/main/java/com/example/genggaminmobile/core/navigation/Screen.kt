@@ -20,8 +20,12 @@ sealed class Screen(val route: String) {
     object Notification : Screen("notification")
 
     object LoanHistory : Screen("loan_history")
-    
+
     object LoanProgressTracker : Screen("loan_progress/{loanId}") {
         fun createRoute(loanId: Long) = "loan_progress/$loanId"
     }
+
+    object Help : Screen("help")
+
+    object Payment : Screen("payment")
 }

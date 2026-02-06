@@ -563,20 +563,20 @@ fun LoanDetailContent(
 
         // Show "Lihat Progress" button if loan is still in progress (including APPROVED, before Disbursed)
         val isInProgress = loan.status.lowercase() in listOf("submitted", "pending", "menunggu", "under_review", "proses_verifikasi", "approved", "disetujui")
-        
+
         if (isInProgress) {
             Button(
                 onClick = { loan.id?.let { onViewProgress(it) } },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                    containerColor = MaterialTheme.colorScheme.primary,
+                ),
             ) {
                 Icon(
                     Icons.Default.Timeline,
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Lihat Progress Real-Time", fontWeight = FontWeight.Bold)
@@ -622,8 +622,8 @@ fun LoanDetailContent(
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
         ) {
             Text("Tutup", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

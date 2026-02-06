@@ -14,10 +14,10 @@ import com.example.genggaminmobile.R
 
 /**
  * BroadcastReceiver yang dipanggil oleh AlarmManager saat timer berakhir.
- * 
+ *
  * Ini adalah "jaminan" bahwa meskipun Service mati karena memori penuh,
  * aplikasi tetap bisa menampilkan notifikasi saat waktu habis.
- * 
+ *
  * AlarmManager akan "membangunkan" aplikasi dan menjalankan receiver ini.
  */
 class TimerExpiredReceiver : BroadcastReceiver() {
@@ -29,10 +29,10 @@ class TimerExpiredReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val loanId = intent.getLongExtra(LoanTimerService.EXTRA_LOAN_ID, -1L)
-        
+
         // Create notification channel for Android O+
         createNotificationChannel(context)
-        
+
         // Show completion notification
         showNotification(context, loanId)
     }
@@ -42,13 +42,13 @@ class TimerExpiredReceiver : BroadcastReceiver() {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 "Pengajuan Selesai",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 description = "Notifikasi saat waktu pengajuan berakhir"
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 500, 200, 500)
             }
-            
+
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
         }
@@ -63,12 +63,12 @@ class TimerExpiredReceiver : BroadcastReceiver() {
                 // Can pass loan ID to navigate to specific loan detail
                 putExtra("navigate_to_loan", loanId)
             },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        
+
         // Play notification sound
         val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-        
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle("⏰ Waktu Proses Selesai!")
             .setContentText("Pengajuan Anda sedang dalam tahap verifikasi akhir. Tap untuk melihat status.")
@@ -81,10 +81,10 @@ class TimerExpiredReceiver : BroadcastReceiver() {
             .setVibrate(longArrayOf(0, 500, 200, 500))
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText("Waktu estimasi 10 menit telah berakhir. Pengajuan Anda sedang dalam proses verifikasi akhir. Tap untuk melihat status terkini.")
+                    .bigText("Waktu estimasi 10 menit telah berakhir. Pengajuan Anda sedang dalam proses verifikasi akhir. Tap untuk melihat status terkini."),
             )
             .build()
-        
+
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(NOTIFICATION_ID, notification)
     }

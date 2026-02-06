@@ -61,7 +61,7 @@ constructor(
             Result.failure(e)
         }
     }
-    
+
     /**
      * Parse timestamp string from backend (ISO format) to Unix milliseconds
      * Supports formats: "yyyy-MM-dd'T'HH:mm:ss" and "yyyy-MM-dd'T'HH:mm:ss.SSS"
@@ -74,7 +74,7 @@ constructor(
                 "yyyy-MM-dd'T'HH:mm:ss.SSS",
                 "yyyy-MM-dd'T'HH:mm:ss",
                 "yyyy-MM-dd HH:mm:ss.SSS",
-                "yyyy-MM-dd HH:mm:ss"
+                "yyyy-MM-dd HH:mm:ss",
             )
             var result: Long? = null
             for (format in formats) {
@@ -270,7 +270,7 @@ constructor(
         }
         return if (allSuccess) Result.success(Unit) else Result.failure(Exception("Failed to sync some loans"))
     }
-    
+
     override suspend fun getLoanById(loanId: Long): Loan? {
         return try {
             // First try to find by remoteId (from backend), then fallback to localId
@@ -286,7 +286,7 @@ constructor(
 
     override fun getLoanFlow(loanId: Long): Flow<Loan?> {
         return loanDao.getAllLoans().map { loans ->
-            val entity = loans.find { it.remoteId == loanId } 
+            val entity = loans.find { it.remoteId == loanId }
                 ?: loans.find { it.localId == loanId }
             entity?.toDomain()
         }

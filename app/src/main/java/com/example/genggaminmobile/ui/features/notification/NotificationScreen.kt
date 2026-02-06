@@ -5,7 +5,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -25,7 +24,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -178,7 +176,7 @@ private fun NotificationTopBar(
                         }
                     }
                 }
-                
+
                 if (hasNotifications && unreadCount > 0) {
                     TextButton(
                         onClick = onMarkAllRead,
@@ -233,11 +231,11 @@ private fun ErrorState(
     onRetry: () -> Unit,
 ) {
     var isVisible by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(Unit) {
         isVisible = true
     }
-    
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
@@ -277,14 +275,14 @@ private fun ErrorState(
                         )
                     }
                 }
-                
+
                 Text(
                     text = "Gagal Memuat Notifikasi",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                
+
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
@@ -292,9 +290,9 @@ private fun ErrorState(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Button(
                     onClick = onRetry,
                     colors = ButtonDefaults.buttonColors(
@@ -317,11 +315,11 @@ private fun ErrorState(
 @Composable
 private fun EmptyNotificationState() {
     var isVisible by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(Unit) {
         isVisible = true
     }
-    
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
@@ -361,14 +359,14 @@ private fun EmptyNotificationState() {
                         )
                     }
                 }
-                
+
                 Text(
                     text = stringResource(R.string.notification_empty),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                
+
                 Text(
                     text = "Kami akan memberitahumu ketika ada pembaruan penting",
                     style = MaterialTheme.typography.bodyMedium,
@@ -390,7 +388,7 @@ private fun NotificationList(
     onLoadMore: () -> Unit,
 ) {
     val listState = rememberLazyListState()
-    
+
     // Detect when user scrolls near the end to trigger pagination
     val shouldLoadMore = remember {
         derivedStateOf {
@@ -399,13 +397,13 @@ private fun NotificationList(
             lastVisibleItem >= totalItems - 3 && !isLastPage && !isLoadingMore
         }
     }
-    
+
     LaunchedEffect(shouldLoadMore.value) {
         if (shouldLoadMore.value) {
             onLoadMore()
         }
     }
-    
+
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -417,12 +415,12 @@ private fun NotificationList(
             key = { _, notification -> notification.id },
         ) { index, notification ->
             var isVisible by remember { mutableStateOf(false) }
-            
+
             LaunchedEffect(notification.id) {
                 delay(index.coerceAtMost(10) * 50L) // Staggered animation, max delay for first 10
                 isVisible = true
             }
-            
+
             AnimatedVisibility(
                 visible = isVisible,
                 enter = slideInVertically(
@@ -439,7 +437,7 @@ private fun NotificationList(
                 )
             }
         }
-        
+
         // Loading more indicator
         if (isLoadingMore) {
             item {
@@ -470,9 +468,9 @@ private fun NotificationItemModern(
         animationSpec = spring(stiffness = Spring.StiffnessHigh),
         label = "scale",
     )
-    
+
     val notificationStyle = getNotificationStyle(notification.type)
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -516,7 +514,7 @@ private fun NotificationItemModern(
                     modifier = Modifier.size(24.dp),
                 )
             }
-            
+
             // Content
             Column(
                 modifier = Modifier.weight(1f),
@@ -536,7 +534,7 @@ private fun NotificationItemModern(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    
+
                     // Unread indicator
                     if (!notification.isRead) {
                         Box(
@@ -550,7 +548,7 @@ private fun NotificationItemModern(
                         )
                     }
                 }
-                
+
                 Text(
                     text = notification.message,
                     style = MaterialTheme.typography.bodyMedium,
@@ -558,9 +556,9 @@ private fun NotificationItemModern(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -576,7 +574,7 @@ private fun NotificationItemModern(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     )
-                    
+
                     // Type badge
                     notification.type?.let { type ->
                         Spacer(modifier = Modifier.width(8.dp))
@@ -596,7 +594,7 @@ private fun NotificationItemModern(
             }
         }
     }
-    
+
     LaunchedEffect(isPressed) {
         if (isPressed) {
             delay(100)
@@ -675,13 +673,13 @@ private fun formatTimeAgo(dateTimeString: String): String {
         val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
         val dateTime = LocalDateTime.parse(dateTimeString, formatter)
         val now = LocalDateTime.now()
-        
+
         val minutes = ChronoUnit.MINUTES.between(dateTime, now)
         val hours = ChronoUnit.HOURS.between(dateTime, now)
         val days = ChronoUnit.DAYS.between(dateTime, now)
         val weeks = days / 7
         val months = days / 30
-        
+
         when {
             minutes < 1 -> "Baru saja"
             minutes < 60 -> "$minutes menit lalu"

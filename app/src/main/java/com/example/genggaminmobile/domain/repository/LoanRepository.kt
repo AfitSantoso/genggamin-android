@@ -24,10 +24,10 @@ interface LoanRepository {
     fun getLimitsFlow(): Flow<List<LoanLimit>>
 
     suspend fun syncUnsyncedLoans(): Result<Unit>
-    
+
     suspend fun getLoanById(loanId: Long): Loan?
-    
-    fun getLoanFlow(loanId: Long): kotlinx.coroutines.flow.Flow<Loan?>  // Reactive Flow
+
+    fun getLoanFlow(loanId: Long): kotlinx.coroutines.flow.Flow<Loan?> // Reactive Flow
 
     /**
      * Cancel/delete an offline loan application by its local ID.
