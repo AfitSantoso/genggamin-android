@@ -566,7 +566,7 @@ private fun getFAQCategories(): List<FAQCategory> {
                 ),
                 FAQItem(
                     question = "Bagaimana cara konfirmasi pembayaran?",
-                    answer = "Pembayaran via VA/Transfer biasanya dikonfirmasi otomatis. Jika dalam 2x24 jam status belum berubah:\n1. Buka menu Riwayat Pinjaman\n2. Pilih pinjaman yang sudah dibayar\n3. Klik 'Konfirmasi Pembayaran'\n4. Upload bukti transfer/struk\n5. Tim kami akan memverifikasi dalam 1x24 jam.",
+                    answer = "Pembayaran via VA/Transfer biasanya dikonfirmasi otomatis. Jika dalam 1x24 jam status belum berubah:\n1. Buka menu Riwayat Pinjaman\n2. Pilih pinjaman yang sudah dibayar\n3. Klik 'Konfirmasi Pembayaran'\n4. Upload bukti transfer/struk\n5. Tim kami akan memverifikasi dalam 1x24 jam.",
                 ),
                 FAQItem(
                     question = "Sudah bayar tapi tagihan masih muncul, bagaimana?",

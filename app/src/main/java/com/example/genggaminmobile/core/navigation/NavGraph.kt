@@ -18,9 +18,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Payment
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,11 +49,12 @@ import com.example.genggaminmobile.ui.features.auth.forgot_password.ForgotPasswo
 import com.example.genggaminmobile.ui.features.auth.login.LoginScreen
 import com.example.genggaminmobile.ui.features.auth.register.RegisterScreen
 import com.example.genggaminmobile.ui.features.auth.reset_password.ResetPasswordScreen
-import com.example.genggaminmobile.ui.features.home.HomeScreen
 import com.example.genggaminmobile.ui.features.help.HelpScreen
+import com.example.genggaminmobile.ui.features.home.HomeScreen
 import com.example.genggaminmobile.ui.features.loan.LoanApplicationScreen
 import com.example.genggaminmobile.ui.features.loan.LoanProgressTrackerScreen
 import com.example.genggaminmobile.ui.features.notification.NotificationScreen
+import com.example.genggaminmobile.ui.features.payment.PaymentScreen
 import com.example.genggaminmobile.ui.features.profile.ProfileScreen
 
 @Composable
@@ -62,7 +65,7 @@ fun NavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomBarRoutes = listOf(Screen.Home.route, Screen.Profile.route, Screen.LoanHistory.route)
+    val bottomBarRoutes = listOf(Screen.Home.route, Screen.LoanHistory.route, Screen.Payment.route, Screen.Profile.route)
     val showBottomBar = currentRoute in bottomBarRoutes
 
     Scaffold(
@@ -241,6 +244,13 @@ fun NavGraph(
                     },
                 )
             }
+            composable(Screen.Payment.route) {
+                PaymentScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                )
+            }
         }
     }
 }
@@ -270,6 +280,7 @@ fun ModernNavigationBar(
             val items = listOf(
                 NavItem(Screen.Home.route, "Home", Icons.Default.Home, Icons.Outlined.Home),
                 NavItem(Screen.LoanHistory.route, "Pinjaman", Icons.Default.List, Icons.Outlined.List),
+                NavItem(Screen.Payment.route, "Bayar", Icons.Default.Payment, Icons.Outlined.Payment),
                 NavItem(Screen.Profile.route, "Profil", Icons.Default.Person, Icons.Outlined.Person),
             )
 
