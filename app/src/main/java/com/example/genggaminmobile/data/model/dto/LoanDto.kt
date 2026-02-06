@@ -13,6 +13,8 @@ data class LoanDto(
     @SerializedName("submittedAt") val submittedAt: String? = null,
     @SerializedName("latitude") val latitude: Double? = null,
     @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("createdAt") val createdAt: String? = null, // Backend SQL Server created_at
+    @SerializedName("updatedAt") val updatedAt: String? = null, // Backend SQL Server updated_at
 )
 
 data class LoanLimitDto(

@@ -45,6 +45,8 @@ constructor(
                             status = dto.status ?: "PENDING",
                             interestRate = dto.interestRate,
                             date = dto.submittedAt,
+                            createdAt = parseTimestampToMillis(dto.createdAt),
+                            updatedAt = parseTimestampToMillis(dto.updatedAt),
                         )
                     } ?: emptyList()
 
@@ -57,6 +59,40 @@ constructor(
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+    
+    /**
+     * Parse timestamp string from backend (ISO format) to Unix milliseconds
+     * Supports formats: "yyyy-MM-dd'T'HH:mm:ss" and "yyyy-MM-dd'T'HH:mm:ss.SSS"
+     */
+    private fun parseTimestampToMillis(timestamp: String?): Long? {
+        if (timestamp.isNullOrBlank()) return null
+        return try {
+            val formats = listOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSSSSSS",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss.SSS",
+                "yyyy-MM-dd HH:mm:ss"
+            )
+            var result: Long? = null
+            for (format in formats) {
+                try {
+                    val sdf = java.text.SimpleDateFormat(format, java.util.Locale.getDefault())
+                    sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    val date = sdf.parse(timestamp)
+                    if (date != null) {
+                        result = date.time
+                        break
+                    }
+                } catch (e: Exception) {
+                    // Try next format
+                }
+            }
+            result
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -233,5 +269,61 @@ constructor(
             }
         }
         return if (allSuccess) Result.success(Unit) else Result.failure(Exception("Failed to sync some loans"))
+    }
+    
+    override suspend fun getLoanById(loanId: Long): Loan? {
+        return try {
+            // First try to find by remoteId (from backend), then fallback to localId
+            val allLoans = loanDao.getAllLoans().firstOrNull() ?: emptyList()
+            val entity = allLoans.find { it.remoteId == loanId }
+                ?: allLoans.find { it.localId == loanId }
+                ?: loanDao.getUnsyncedLoans().find { it.localId == loanId }
+            entity?.toDomain()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override fun getLoanFlow(loanId: Long): Flow<Loan?> {
+        return loanDao.getAllLoans().map { loans ->
+            val entity = loans.find { it.remoteId == loanId } 
+                ?: loans.find { it.localId == loanId }
+            entity?.toDomain()
+        }
+    }
+
+    override suspend fun cancelOfflineLoan(localId: Long): Result<Unit> {
+        return try {
+            // Find the loan first to get the amount and plafondId for restoring limit
+            val allLoans = loanDao.getAllLoans().firstOrNull() ?: emptyList()
+            val loanToCancel = allLoans.find { it.localId == localId }
+
+            if (loanToCancel == null) {
+                return Result.failure(Exception("Pinjaman tidak ditemukan"))
+            }
+
+            // Only allow cancellation for offline pending loans that haven't been synced
+            if (loanToCancel.isSynced) {
+                return Result.failure(Exception("Tidak dapat membatalkan pinjaman yang sudah terkirim ke server"))
+            }
+
+            if (!loanToCancel.status.contains("Offline", ignoreCase = true)) {
+                return Result.failure(Exception("Hanya dapat membatalkan pengajuan offline"))
+            }
+
+            // Restore the limit that was deducted when loan was submitted
+            val limitEntity = loanLimitDao.getLimitByPlafondId(loanToCancel.plafondId)
+            if (limitEntity != null) {
+                val restoredLimit = limitEntity.availableLimit + loanToCancel.amount
+                loanLimitDao.updateLimit(limitEntity.copy(availableLimit = restoredLimit))
+            }
+
+            // Delete the loan from local database
+            loanDao.deleteByLocalId(localId)
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

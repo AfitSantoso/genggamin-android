@@ -15,7 +15,7 @@ import com.example.genggaminmobile.data.local.entity.UserEntity
 
 @Database(
     entities = [UserEntity::class, PlafondEntity::class, LoanEntity::class, ProfileEntity::class, LoanLimitEntity::class, com.example.genggaminmobile.data.local.entity.PendingProfileUpdateEntity::class],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

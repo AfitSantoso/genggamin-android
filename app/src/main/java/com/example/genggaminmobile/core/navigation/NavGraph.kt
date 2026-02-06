@@ -49,6 +49,7 @@ import com.example.genggaminmobile.ui.features.auth.register.RegisterScreen
 import com.example.genggaminmobile.ui.features.auth.reset_password.ResetPasswordScreen
 import com.example.genggaminmobile.ui.features.home.HomeScreen
 import com.example.genggaminmobile.ui.features.loan.LoanApplicationScreen
+import com.example.genggaminmobile.ui.features.loan.LoanProgressTrackerScreen
 import com.example.genggaminmobile.ui.features.notification.NotificationScreen
 import com.example.genggaminmobile.ui.features.profile.ProfileScreen
 
@@ -205,6 +206,25 @@ fun NavGraph(
             }
             composable(Screen.LoanHistory.route) {
                 com.example.genggaminmobile.ui.features.loan.LoanHistoryScreen(
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onViewProgress = { loanId ->
+                        navController.navigate(Screen.LoanProgressTracker.createRoute(loanId))
+                    },
+                )
+            }
+            composable(
+                route = Screen.LoanProgressTracker.route,
+                arguments = listOf(
+                    navArgument("loanId") {
+                        type = NavType.LongType
+                    },
+                ),
+            ) { backStackEntry ->
+                val loanId = backStackEntry.arguments?.getLong("loanId") ?: 0L
+                LoanProgressTrackerScreen(
+                    loanId = loanId,
                     onBack = {
                         navController.popBackStack()
                     },

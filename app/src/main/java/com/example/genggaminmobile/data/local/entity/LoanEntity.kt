@@ -18,6 +18,9 @@ data class LoanEntity(
     val isSynced: Boolean = true,
     val latitude: Double? = null,
     val longitude: Double? = null,
+    val submittedAt: Long = System.currentTimeMillis(), // Local timestamp
+    val createdAt: Long? = null, // Backend created_at
+    val updatedAt: Long? = null, // Backend updated_at
 )
 
 fun LoanEntity.toDomain() =
@@ -30,6 +33,9 @@ fun LoanEntity.toDomain() =
         status = status,
         interestRate = interestRate,
         date = date,
+        submittedAt = submittedAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )
 
 fun Loan.toEntity(isSynced: Boolean = true) =
@@ -43,4 +49,7 @@ fun Loan.toEntity(isSynced: Boolean = true) =
         interestRate = interestRate,
         date = date,
         isSynced = isSynced,
+        submittedAt = submittedAt,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )

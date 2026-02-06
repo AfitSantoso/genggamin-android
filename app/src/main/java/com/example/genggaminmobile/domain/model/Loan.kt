@@ -9,6 +9,9 @@ data class Loan(
     val status: String,
     val interestRate: Double?,
     val date: String?,
+    val submittedAt: Long = System.currentTimeMillis(), // Local timestamp
+    val createdAt: Long? = null, // Backend created_at timestamp
+    val updatedAt: Long? = null, // Backend updated_at timestamp
 )
 
 data class LoanLimit(

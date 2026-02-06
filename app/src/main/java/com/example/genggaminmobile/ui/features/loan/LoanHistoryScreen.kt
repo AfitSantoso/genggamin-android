@@ -35,6 +35,7 @@ import java.util.*
 @Composable
 fun LoanHistoryScreen(
     onBack: () -> Unit,
+    onViewProgress: (Long) -> Unit = {},
     viewModel: LoanHistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -42,6 +43,28 @@ fun LoanHistoryScreen(
     var selectedLoan by remember { mutableStateOf<Loan?>(null) }
     val sheetState = rememberModalBottomSheetState()
     var showDetailSheet by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Handle cancel success/error feedback
+    LaunchedEffect(uiState.cancelSuccess, uiState.cancelError) {
+        if (uiState.cancelSuccess) {
+            showDetailSheet = false
+            selectedLoan = null
+            snackbarHostState.showSnackbar(
+                message = "Pengajuan berhasil dibatalkan",
+                duration = SnackbarDuration.Short,
+            )
+            viewModel.clearCancelState()
+        }
+        uiState.cancelError?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Short,
+            )
+            viewModel.clearCancelState()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -68,6 +91,7 @@ fun LoanHistoryScreen(
                 ),
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
@@ -150,8 +174,64 @@ fun LoanHistoryScreen(
                 loan = selectedLoan!!,
                 currencyFormatter = currencyFormatter,
                 onClose = { showDetailSheet = false },
+                onViewProgress = onViewProgress,
+                onCancelOffline = {
+                    showCancelDialog = true
+                },
+                isCancelling = uiState.isCancelling,
             )
         }
+    }
+
+    // Cancel Confirmation Dialog
+    if (showCancelDialog && selectedLoan != null) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            icon = {
+                Icon(
+                    Icons.Outlined.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(32.dp),
+                )
+            },
+            title = {
+                Text(
+                    "Batalkan Pengajuan?",
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    "Pengajuan pinjaman ini akan dihapus secara permanen. Anda dapat mengajukan kembali kapan saja.",
+                    textAlign = TextAlign.Center,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCancelDialog = false
+                        // Pass localId - for offline loans without remoteId, use the loan.id
+                        // Since offline loans use localId stored in Room
+                        val loanToCancel = selectedLoan
+                        if (loanToCancel != null) {
+                            // For offline loans, the id field comes from localId mapping
+                            viewModel.cancelOfflineLoan(loanToCancel.id ?: 0L)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Ya, Batalkan")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelDialog = false }) {
+                    Text("Tidak")
+                }
+            },
+        )
     }
 }
 
@@ -414,6 +494,9 @@ fun LoanDetailContent(
     loan: Loan,
     currencyFormatter: NumberFormat,
     onClose: () -> Unit,
+    onViewProgress: (Long) -> Unit = {},
+    onCancelOffline: () -> Unit = {},
+    isCancelling: Boolean = false,
 ) {
     val formattedDate = remember(loan.date) {
         if (loan.date != null) {
@@ -437,6 +520,9 @@ fun LoanDetailContent(
             "-"
         }
     }
+
+    // Check if this is an offline pending loan
+    val isOfflinePending = loan.status.contains("Offline", ignoreCase = true)
 
     Column(
         modifier = Modifier
@@ -475,12 +561,71 @@ fun LoanDetailContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Show "Lihat Progress" button if loan is still in progress (including APPROVED, before Disbursed)
+        val isInProgress = loan.status.lowercase() in listOf("submitted", "pending", "menunggu", "under_review", "proses_verifikasi", "approved", "disetujui")
+        
+        if (isInProgress) {
+            Button(
+                onClick = { loan.id?.let { onViewProgress(it) } },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    Icons.Default.Timeline,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Lihat Progress Real-Time", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Show "Batalkan Pengajuan" button only for offline pending loans
+        if (isOfflinePending) {
+            OutlinedButton(
+                onClick = onCancelOffline,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                enabled = !isCancelling,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+            ) {
+                if (isCancelling) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Membatalkan...", fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(
+                        Icons.Outlined.Cancel,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Batalkan Pengajuan", fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Button(
             onClick = onClose,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
-            Text("Tutup")
+            Text("Tutup", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(modifier = Modifier.height(16.dp))
     }

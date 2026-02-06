@@ -29,4 +29,7 @@ interface LoanDao {
 
     @Query("DELETE FROM loans WHERE isSynced = 1")
     suspend fun deleteSyncedLoans()
+
+    @Query("DELETE FROM loans WHERE localId = :localId")
+    suspend fun deleteByLocalId(localId: Long)
 }

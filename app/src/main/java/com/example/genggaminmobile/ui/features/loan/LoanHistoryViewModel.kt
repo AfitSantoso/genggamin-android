@@ -20,6 +20,9 @@ data class LoanHistoryUiState(
     val error: String? = null,
     val selectedFilter: String = "ALL",
     val isHistoryView: Boolean = false,
+    val isCancelling: Boolean = false,
+    val cancelSuccess: Boolean = false,
+    val cancelError: String? = null,
 )
 
 @HiltViewModel
@@ -30,9 +33,32 @@ constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoanHistoryUiState())
     val uiState: StateFlow<LoanHistoryUiState> = _uiState.asStateFlow()
+    
+    private var pollingJob: kotlinx.coroutines.Job? = null
 
     init {
         loadLoans()
+        startPolling()
+    }
+    
+    private fun startPolling() {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(10000) // Poll every 10 seconds
+                try {
+                    // Refresh from backend silently
+                    loanRepository.refreshLoans()
+                } catch (e: Exception) {
+                    // Ignore errors during polling
+                }
+            }
+        }
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        pollingJob?.cancel()
     }
 
     fun loadLoans() {
@@ -97,5 +123,48 @@ constructor(
             }
 
         _uiState.update { it.copy(filteredLoans = filtered) }
+    }
+
+    /**
+     * Cancel an offline loan application.
+     * This will delete the loan from local database and restore the limit.
+     */
+    fun cancelOfflineLoan(localId: Long) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCancelling = true, cancelError = null) }
+
+            val result = loanRepository.cancelOfflineLoan(localId)
+
+            result.fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(
+                            isCancelling = false,
+                            cancelSuccess = true,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCancelling = false,
+                            cancelError = error.message ?: "Gagal membatalkan pengajuan",
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    /**
+     * Clear cancel state after showing feedback to user
+     */
+    fun clearCancelState() {
+        _uiState.update {
+            it.copy(
+                cancelSuccess = false,
+                cancelError = null,
+            )
+        }
     }
 }
