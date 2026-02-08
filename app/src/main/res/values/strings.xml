@@ -65,4 +65,50 @@
     <string name="notification_empty">Belum ada notifikasi</string>
     <string name="notification_mark_all_read">Tandai semua dibaca</string>
 
+    <!-- Contract Section -->
+    <string name="contract_dialog_title">Tanda Tangan Kontrak</string>
+    <string name="contract_dialog_subtitle">Baca dan setujui syarat \u0026 ketentuan pinjaman</string>
+    <string name="contract_clear_signature">Hapus Tanda Tangan</string>
+    <string name="contract_signature_placeholder">Buat tanda tangan Anda di area ini</string>
+    <string name="contract_submit_button">Setuju \u0026 Ajukan Pinjaman</string>
+    <string name="contract_checkbox_agree">Saya telah membaca dan menyetujui seluruh syarat \u0026 ketentuan di atas</string>
+    <string name="contract_loading">Memproses kontrak...</string>
+    <string name="contract_error_no_signature">Silakan buat tanda tangan Anda terlebih dahulu</string>
+    <string name="contract_error_not_agreed">Anda harus menyetujui syarat \u0026 ketentuan untuk melanjutkan</string>
+    <string name="contract_upload_success">Kontrak berhasil disimpan</string>
+    <string name="contract_upload_failed">Gagal menyimpan kontrak. Silakan coba lagi.</string>
+
+    <!-- Contract Document Text -->
+    <string name="contract_title">PERJANJIAN PINJAMAN</string>
+    <string name="contract_number_prefix">Nomor: LOAN/</string>
+    <string name="contract_parties_title">PARA PIHAK:</string>
+    <string name="contract_party_first">Pihak Pertama (Pemberi Pinjaman):</string>
+    <string name="contract_party_first_name">PT GENGGAMIN FINANCE INDONESIA</string>
+    <string name="contract_party_first_address">Jl. Jend. Sudirman Kav. 52–53, Jakarta 12190</string>
+    <string name="contract_party_second">Pihak Kedua (Peminjam):</string>
+    <string name="contract_terms_title">KETENTUAN PINJAMAN:</string>
+    <string name="contract_term_amount">Jumlah Pinjaman</string>
+    <string name="contract_term_tenor">Jangka Waktu</string>
+    <string name="contract_term_tenor_months">%1$d Bulan</string>
+    <string name="contract_term_interest">Suku Bunga</string>
+    <string name="contract_term_interest_percent">%1$.2f%% per tahun</string>
+    <string name="contract_term_installment">Angsuran Bulanan</string>
+    <string name="contract_term_total">Total Pembayaran</string>
+    <string name="contract_term_purpose">Tujuan Pinjaman</string>
+    <string name="contract_obligations_title">KEWAJIBAN PIHAK KEDUA:</string>
+    <string name="contract_obligation_1">1. Membayar angsuran bulanan tepat waktu setiap tanggal %1$s.</string>
+    <string name="contract_obligation_2">2. Memberikan informasi yang benar dan akurat terkait data diri dan keuangan.</string>
+    <string name="contract_obligation_3">3. Tidak menggunakan dana pinjaman untuk kegiatan yang melanggar hukum.</string>
+    <string name="contract_obligation_4">4. Memberitahukan perubahan alamat atau kontak dalam waktu 7 hari kerja.</string>
+    <string name="contract_penalty_title">DENDA KETERLAMBATAN:</string>
+    <string name="contract_penalty_text">Keterlambatan pembayaran akan dikenakan denda sebesar 0,5%% (nol koma lima persen) per hari dari jumlah angsuran yang tertunggak, dengan maksimum denda 30%% dari total angsuran tertunggak.</string>
+    <string name="contract_default_title">WANPRESTASI:</string>
+    <string name="contract_default_text">Apabila Pihak Kedua tidak memenuhi kewajibannya selama 3 (tiga) bulan berturut-turut, Pihak Pertama berhak untuk:\n• Menagih seluruh sisa pinjaman yang belum dibayar\n• Melaporkan ke Sistem Layanan Informasi Keuangan (SLIK) OJK\n• Mengambil langkah hukum yang diperlukan</string>
+    <string name="contract_closing_title">PENUTUP:</string>
+    <string name="contract_closing_text">Perjanjian ini dibuat dalam keadaan sadar tanpa adanya paksaan atau tekanan dari pihak manapun dan berlaku efektif sejak ditandatangani secara elektronik.</string>
+    <string name="contract_date_place">Dibuat di Jakarta pada tanggal %1$s</string>
+    <string name="contract_signature_first_party">PIHAK PERTAMA</string>
+    <string name="contract_signature_second_party">PIHAK KEDUA</string>
+    <string name="contract_signature_company">PT Genggamin Finance Indonesia</string>
+
 </resources>

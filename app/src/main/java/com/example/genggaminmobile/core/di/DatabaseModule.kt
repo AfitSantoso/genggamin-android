@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.genggaminmobile.data.local.dao.LoanDao
 import com.example.genggaminmobile.data.local.dao.LoanLimitDao
+import com.example.genggaminmobile.data.local.dao.PendingContractDao
 import com.example.genggaminmobile.data.local.dao.PlafondDao
 import com.example.genggaminmobile.data.local.dao.ProfileDao
 import com.example.genggaminmobile.data.local.dao.UserDao
@@ -55,5 +56,10 @@ object DatabaseModule {
     @Provides
     fun provideLoanLimitDao(database: AppDatabase): LoanLimitDao {
         return database.loanLimitDao()
+    }
+
+    @Provides
+    fun providePendingContractDao(database: AppDatabase): PendingContractDao {
+        return database.pendingContractDao()
     }
 }

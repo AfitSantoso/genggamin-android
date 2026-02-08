@@ -522,7 +522,9 @@ fun LoanDetailContent(
     }
 
     // Check if this is an offline pending loan
-    val isOfflinePending = loan.status.contains("Offline", ignoreCase = true)
+    val isOfflinePending = loan.status.contains("Offline", ignoreCase = true) ||
+        loan.status.contains("Mengirim", ignoreCase = true) ||
+        loan.status.contains("Mengunggah", ignoreCase = true)
 
     Column(
         modifier = Modifier
@@ -762,16 +764,24 @@ fun ModernStatusChip(status: String) {
     }
 }
 
-fun getStatusColor(status: String): Pair<Color, Color> = when (status.lowercase()) {
-    "approved", "disetujui", "disbursed", "cair" -> Color(0xFF4CAF50) to Color(0xFF1B5E20)
-    "submitted", "pending", "menunggu", "under_review" -> Color(0xFFFF9800) to Color(0xFFE65100)
-    "rejected", "ditolak" -> Color(0xFFF44336) to Color(0xFFB71C1C)
+fun getStatusColor(status: String): Pair<Color, Color> = when {
+    status.lowercase().contains("offline") -> Color(0xFF2196F3) to Color(0xFF0D47A1) // Blue for offline
+    status.lowercase().contains("mengirim") -> Color(0xFF03A9F4) to Color(0xFF01579B) // Light blue for sending
+    status.lowercase().contains("mengunggah") -> Color(0xFF03A9F4) to Color(0xFF01579B) // Light blue for uploading
+    status.lowercase().contains("gagal") -> Color(0xFFF44336) to Color(0xFFB71C1C) // Red for failed
+    status.lowercase() in listOf("approved", "disetujui", "disbursed", "cair") -> Color(0xFF4CAF50) to Color(0xFF1B5E20)
+    status.lowercase() in listOf("submitted", "pending", "menunggu", "under_review") -> Color(0xFFFF9800) to Color(0xFFE65100)
+    status.lowercase() in listOf("rejected", "ditolak") -> Color(0xFFF44336) to Color(0xFFB71C1C)
     else -> Color(0xFF9E9E9E) to Color(0xFF424242)
 }
 
-fun getStatusIcon(status: String): ImageVector = when (status.lowercase()) {
-    "approved", "disetujui", "disbursed", "cair" -> Icons.Default.CheckCircle
-    "submitted", "pending", "menunggu", "under_review" -> Icons.Default.Schedule
-    "rejected", "ditolak" -> Icons.Default.Cancel
+fun getStatusIcon(status: String): ImageVector = when {
+    status.lowercase().contains("offline") -> Icons.Default.CloudQueue // Cloud for offline
+    status.lowercase().contains("mengirim") -> Icons.Default.CloudUpload // Upload cloud for sending
+    status.lowercase().contains("mengunggah") -> Icons.Default.CloudUpload // Upload cloud for uploading
+    status.lowercase().contains("gagal") -> Icons.Default.CloudOff // Cloud off for failed
+    status.lowercase() in listOf("approved", "disetujui", "disbursed", "cair") -> Icons.Default.CheckCircle
+    status.lowercase() in listOf("submitted", "pending", "menunggu", "under_review") -> Icons.Default.Schedule
+    status.lowercase() in listOf("rejected", "ditolak") -> Icons.Default.Cancel
     else -> Icons.Default.HelpOutline
 }

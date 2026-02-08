@@ -75,15 +75,24 @@ fun ProfileScreen(
     var selfieFile by remember { mutableStateOf<File?>(null) }
     var payslipFile by remember { mutableStateOf<File?>(null) }
 
+    // Track if existing documents have been deleted by user
+    var existingKtpDeleted by remember { mutableStateOf(false) }
+    var existingSelfieDeleted by remember { mutableStateOf(false) }
+    var existingPayslipDeleted by remember { mutableStateOf(false) }
+
+    // Calculate effective upload status (considering both new files and existing non-deleted ones)
+    val isKtpAvailable = ktpFile != null || (!uiState.profile?.ktpImagePath.isNullOrEmpty() && !existingKtpDeleted)
+    val isSelfieAvailable = selfieFile != null || (!uiState.profile?.selfieImagePath.isNullOrEmpty() && !existingSelfieDeleted)
+    // Payslip is optional, so we don't block validation on it
+
     // Validation Logic for each step
     val isStepValid = when (uiState.currentStep) {
         1 -> nik.length == 16 && dob.isNotEmpty() && pob.isNotEmpty() && address.isNotEmpty() && phone.isNotEmpty()
         2 -> income.isNotEmpty() && occupation.isNotEmpty() && currentAddress.isNotEmpty() && motherName.isNotEmpty()
         3 -> bankAccount.isNotEmpty() && bankHolder.isNotEmpty()
         4 -> emergencyName.isNotEmpty() && emergencyRelation.isNotEmpty() && emergencyPhone.isNotEmpty()
-        5 -> (ktpFile != null || !uiState.profile?.ktpImagePath.isNullOrEmpty()) &&
-            (selfieFile != null || !uiState.profile?.selfieImagePath.isNullOrEmpty()) &&
-            (payslipFile != null || !uiState.profile?.payslipImagePath.isNullOrEmpty())
+        // Step 5: KTP and Selfie are required, Payslip is OPTIONAL
+        5 -> isKtpAvailable && isSelfieAvailable
         else -> false
     }
 
@@ -105,12 +114,22 @@ fun ProfileScreen(
                 emergencyRelation = e.relationship ?: ""
                 emergencyPhone = e.phone ?: ""
             }
+
+            // Reset file states and delete flags when profile is loaded (fresh data from server)
+            ktpFile = null
+            selfieFile = null
+            payslipFile = null
+            existingKtpDeleted = false
+            existingSelfieDeleted = false
+            existingPayslipDeleted = false
         }
     }
 
     if (uiState.isUpdateSuccess) {
         ModernSuccessDialog(onDismiss = {
             viewModel.resetUpdateSuccess()
+            // Reload profile to get the latest data from server
+            // Backend now correctly handles deletePayslip flag
             viewModel.loadProfile()
         })
     }
@@ -203,13 +222,37 @@ fun ProfileScreen(
                                         3 -> BankDataStep(bankAccount, { bankAccount = it }, bankHolder, { bankHolder = it })
                                         4 -> EmergencyContactStep(emergencyName, { emergencyName = it }, emergencyRelation, { emergencyRelation = it }, emergencyPhone, { emergencyPhone = it })
                                         5 -> DocumentUploadStep(
-                                            ktpFile,
-                                            { ktpFile = it },
-                                            selfieFile,
-                                            { selfieFile = it },
-                                            payslipFile,
-                                            { payslipFile = it },
+                                            ktp = ktpFile,
+                                            onKtpSelect = {
+                                                ktpFile = it
+                                                existingKtpDeleted = false
+                                            },
+                                            onKtpDelete = {
+                                                ktpFile = null
+                                                existingKtpDeleted = true
+                                            },
+                                            selfie = selfieFile,
+                                            onSelfieSelect = {
+                                                selfieFile = it
+                                                existingSelfieDeleted = false
+                                            },
+                                            onSelfieDelete = {
+                                                selfieFile = null
+                                                existingSelfieDeleted = true
+                                            },
+                                            payslip = payslipFile,
+                                            onPayslipSelect = {
+                                                payslipFile = it
+                                                existingPayslipDeleted = false
+                                            },
+                                            onPayslipDelete = {
+                                                payslipFile = null
+                                                existingPayslipDeleted = true
+                                            },
                                             existingProfile = uiState.profile,
+                                            existingKtpDeleted = existingKtpDeleted,
+                                            existingSelfieDeleted = existingSelfieDeleted,
+                                            existingPayslipDeleted = existingPayslipDeleted,
                                             lastUpdated = uiState.lastUpdated,
                                         )
                                     }
@@ -243,6 +286,10 @@ fun ProfileScreen(
                                             if (uiState.currentStep < uiState.totalSteps) {
                                                 viewModel.nextStep()
                                             } else {
+                                                // Determine if user wants to delete existing payslip
+                                                // This is true when: existing payslip was marked as deleted AND no new payslip was uploaded
+                                                val shouldDeletePayslip = existingPayslipDeleted && payslipFile == null
+
                                                 val request = CustomerProfileRequest(
                                                     nik = nik, dateOfBirth = dob, placeOfBirth = pob,
                                                     address = address, phone = phone, monthlyIncome = income.replace(".", "").toLongOrNull() ?: 0L,
@@ -250,6 +297,7 @@ fun ProfileScreen(
                                                     motherMaidenName = motherName, accountNumber = bankAccount,
                                                     accountHolderName = bankHolder,
                                                     emergencyContact = EmergencyContactDto(name = emergencyName, relationship = emergencyRelation, phone = emergencyPhone),
+                                                    deletePayslip = shouldDeletePayslip,
                                                 )
                                                 viewModel.submitProfile(request, ktpFile, selfieFile, payslipFile)
                                             }
@@ -479,6 +527,9 @@ fun ModernInfoCard(title: String, icon: ImageVector, items: List<Pair<String, St
 
 @Composable
 fun ModernDocumentSection(ktpPath: String?, selfiePath: String?, payslipPath: String?, lastUpdated: Long) {
+    // Check if payslip exists (not null and not blank)
+    val hasPayslip = !payslipPath.isNullOrBlank()
+
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -491,10 +542,46 @@ fun ModernDocumentSection(ktpPath: String?, selfiePath: String?, payslipPath: St
                 Text("Dokumen & KYC", fontWeight = FontWeight.ExtraBold, style = MaterialTheme.typography.titleMedium)
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                DocumentItem(label = "KTP", url = ktpPath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
-                DocumentItem(label = "Selfie", url = selfiePath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
-                DocumentItem(label = "Slip Gaji", url = payslipPath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+
+            // Dynamic layout based on whether payslip exists
+            if (hasPayslip) {
+                // Show all 3 documents
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DocumentItem(label = "KTP", url = ktpPath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+                    DocumentItem(label = "Selfie", url = selfiePath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+                    DocumentItem(label = "Slip Gaji", url = payslipPath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+                }
+            } else {
+                // Only show required documents (KTP and Selfie)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    DocumentItem(label = "KTP", url = ktpPath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+                    DocumentItem(label = "Selfie", url = selfiePath, lastUpdated = lastUpdated, modifier = Modifier.weight(1f))
+                }
+                // Optional: Show info that payslip is not uploaded
+                Spacer(modifier = Modifier.height(12.dp))
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Slip gaji tidak diunggah (opsional)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
     }
@@ -512,15 +599,20 @@ fun DocumentItem(label: String, url: String?, lastUpdated: Long, modifier: Modif
             contentAlignment = Alignment.Center,
         ) {
             if (!url.isNullOrBlank()) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(if (url.startsWith("/")) File(url) else url)
-                        .memoryCacheKey("$url-$lastUpdated")
-                        .build(),
-                    contentDescription = label,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                // Key for recomposition when url or lastUpdated changes
+                key(url, lastUpdated) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(if (url.startsWith("/")) File(url) else url)
+                            .memoryCacheKey("$url-$lastUpdated")
+                            .diskCacheKey("$url-$lastUpdated")
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = label,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             } else {
                 Icon(Icons.Outlined.ImageNotSupported, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
             }
@@ -702,11 +794,17 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
 fun DocumentUploadStep(
     ktp: File?,
     onKtpSelect: (File) -> Unit,
+    onKtpDelete: () -> Unit,
     selfie: File?,
     onSelfieSelect: (File) -> Unit,
+    onSelfieDelete: () -> Unit,
     payslip: File?,
     onPayslipSelect: (File) -> Unit,
+    onPayslipDelete: () -> Unit,
     existingProfile: com.example.genggaminmobile.data.model.dto.CustomerProfileResponse? = null,
+    existingKtpDeleted: Boolean = false,
+    existingSelfieDeleted: Boolean = false,
+    existingPayslipDeleted: Boolean = false,
     lastUpdated: Long = 0,
 ) {
     val context = LocalContext.current
@@ -735,10 +833,12 @@ fun DocumentUploadStep(
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
             tempCameraFile?.let { file ->
+                // Fix image orientation before passing to callback
+                val fixedFile = fixImageOrientation(file)
                 when (currentPickingType) {
-                    "ktp" -> onKtpSelect(file)
-                    "selfie" -> onSelfieSelect(file)
-                    "payslip" -> onPayslipSelect(file)
+                    "ktp" -> onKtpSelect(fixedFile)
+                    "selfie" -> onSelfieSelect(fixedFile)
+                    "payslip" -> onPayslipSelect(fixedFile)
                 }
             }
         }
@@ -763,28 +863,81 @@ fun DocumentUploadStep(
         galleryLauncher.launch("image/*")
     }
 
+    // Calculate if documents are uploaded (considering new files and existing ones not deleted)
+    val isKtpUploaded = ktp != null || (!existingProfile?.ktpImagePath.isNullOrEmpty() && !existingKtpDeleted)
+    val isSelfieUploaded = selfie != null || (!existingProfile?.selfieImagePath.isNullOrEmpty() && !existingSelfieDeleted)
+    val isPayslipUploaded = payslip != null || (!existingProfile?.payslipImagePath.isNullOrEmpty() && !existingPayslipDeleted)
+
+    // Get preview path (prioritize new file, then existing if not deleted)
+    val ktpPreviewPath = when {
+        ktp != null -> ktp.absolutePath
+        !existingKtpDeleted -> existingProfile?.ktpImagePath
+        else -> null
+    }
+    val selfiePreviewPath = when {
+        selfie != null -> selfie.absolutePath
+        !existingSelfieDeleted -> existingProfile?.selfieImagePath
+        else -> null
+    }
+    val payslipPreviewPath = when {
+        payslip != null -> payslip.absolutePath
+        !existingPayslipDeleted -> existingProfile?.payslipImagePath
+        else -> null
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernUploadItem(
             label = "Foto KTP",
-            isUploaded = ktp != null || !existingProfile?.ktpImagePath.isNullOrEmpty(),
-            previewPath = ktp?.absolutePath ?: existingProfile?.ktpImagePath,
+            isUploaded = isKtpUploaded,
+            previewPath = ktpPreviewPath,
             lastUpdated = lastUpdated,
+            isOptional = false,
+            onDelete = if (isKtpUploaded) onKtpDelete else null,
             onClick = { showSheetForKtp = true },
         )
         ModernUploadItem(
             label = "Foto Selfie + KTP",
-            isUploaded = selfie != null || !existingProfile?.selfieImagePath.isNullOrEmpty(),
-            previewPath = selfie?.absolutePath ?: existingProfile?.selfieImagePath,
+            isUploaded = isSelfieUploaded,
+            previewPath = selfiePreviewPath,
             lastUpdated = lastUpdated,
+            isOptional = false,
+            onDelete = if (isSelfieUploaded) onSelfieDelete else null,
             onClick = { showSheetForSelfie = true },
         )
         ModernUploadItem(
             label = "Foto Slip Gaji",
-            isUploaded = payslip != null || !existingProfile?.payslipImagePath.isNullOrEmpty(),
-            previewPath = payslip?.absolutePath ?: existingProfile?.payslipImagePath,
+            isUploaded = isPayslipUploaded,
+            previewPath = payslipPreviewPath,
             lastUpdated = lastUpdated,
+            isOptional = true, // Payslip is optional, especially for business loan applicants
+            onDelete = if (isPayslipUploaded) onPayslipDelete else null,
             onClick = { showSheetForPayslip = true },
         )
+
+        // Info card for optional payslip
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Slip gaji bersifat opsional. Jika Anda wiraswasta atau tidak memiliki slip gaji, Anda dapat melewati dokumen ini.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                )
+            }
+        }
     }
 
     if (showSheetForKtp) {
@@ -858,7 +1011,87 @@ fun PickerOption(icon: ImageVector, label: String, onClick: () -> Unit) {
 fun uriToFile(context: Context, uri: Uri): File {
     val file = File(context.cacheDir, "upload_${System.currentTimeMillis()}.jpg")
     context.contentResolver.openInputStream(uri)?.use { input -> FileOutputStream(file).use { output -> input.copyTo(output) } }
-    return file
+    // Fix orientation for gallery images as well
+    return fixImageOrientation(file)
+}
+
+/**
+ * Fix image orientation based on EXIF data
+ * Camera photos often have rotation metadata that needs to be applied
+ * to display the image in the correct portrait orientation.
+ * This function reads the EXIF data, rotates the bitmap if needed, and saves it back to the file.
+ */
+fun fixImageOrientation(file: File): File {
+    return try {
+        val exifInterface = android.media.ExifInterface(file.absolutePath)
+        val orientation = exifInterface.getAttributeInt(
+            android.media.ExifInterface.TAG_ORIENTATION,
+            android.media.ExifInterface.ORIENTATION_UNDEFINED,
+        )
+
+        val rotationDegrees = when (orientation) {
+            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+
+        // Also check for flip orientations
+        val needsHorizontalFlip = orientation == android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL
+        val needsVerticalFlip = orientation == android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL
+
+        if (rotationDegrees == 0f && !needsHorizontalFlip && !needsVerticalFlip) {
+            // No rotation needed
+            return file
+        }
+
+        // Decode bitmap
+        val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+
+        // Create transformation matrix
+        val matrix = android.graphics.Matrix()
+
+        if (rotationDegrees != 0f) {
+            matrix.postRotate(rotationDegrees)
+        }
+
+        if (needsHorizontalFlip) {
+            matrix.postScale(-1f, 1f)
+        }
+
+        if (needsVerticalFlip) {
+            matrix.postScale(1f, -1f)
+        }
+
+        // Create rotated bitmap
+        val rotatedBitmap = android.graphics.Bitmap.createBitmap(
+            bitmap,
+            0,
+            0,
+            bitmap.width,
+            bitmap.height,
+            matrix,
+            true,
+        )
+
+        // Save rotated bitmap back to file
+        FileOutputStream(file).use { out ->
+            rotatedBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
+        }
+
+        // Clear EXIF orientation tag since we already applied it
+        val newExif = android.media.ExifInterface(file.absolutePath)
+        newExif.setAttribute(
+            android.media.ExifInterface.TAG_ORIENTATION,
+            android.media.ExifInterface.ORIENTATION_NORMAL.toString(),
+        )
+        newExif.saveAttributes()
+
+        file
+    } catch (e: Exception) {
+        android.util.Log.e("ProfileScreen", "Error fixing image orientation", e)
+        file
+    }
 }
 
 @Composable
@@ -867,6 +1100,8 @@ fun ModernUploadItem(
     isUploaded: Boolean,
     previewPath: String? = null,
     lastUpdated: Long = 0,
+    isOptional: Boolean = false,
+    onDelete: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -876,7 +1111,10 @@ fun ModernUploadItem(
         color = if (isUploaded) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 modifier = Modifier
                     .size(64.dp)
@@ -910,13 +1148,54 @@ fun ModernUploadItem(
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(label, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                    if (isOptional) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                        ) {
+                            Text(
+                                text = "Opsional",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
+                }
                 Text(
-                    text = if (isUploaded) "Dokumen sudah tersedia" else "Ketuk untuk unggah",
+                    text = when {
+                        isUploaded -> "Dokumen sudah tersedia"
+                        isOptional -> "Opsional, ketuk untuk unggah"
+                        else -> "Ketuk untuk unggah"
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isUploaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+
+            // Delete button - only show when there's an uploaded image
+            if (isUploaded && onDelete != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+                            RoundedCornerShape(12.dp),
+                        ),
+                ) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = "Hapus gambar",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
     }

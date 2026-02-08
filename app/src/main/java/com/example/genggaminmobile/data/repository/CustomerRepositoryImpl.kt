@@ -63,6 +63,19 @@ class CustomerRepositoryImpl @Inject constructor(
         val localSelfie = data.selfieImagePath?.let { downloadAndCacheImage(it, "selfie_${data.id}.jpg", forceDownload) }
         val localPayslip = data.payslipImagePath?.let { downloadAndCacheImage(it, "payslip_${data.id}.jpg", forceDownload) }
 
+        // If payslip was deleted (null from server), delete local cache
+        if (data.payslipImagePath.isNullOrBlank()) {
+            try {
+                val payslipFile = File(context.filesDir, "payslip_${data.id}.jpg")
+                if (payslipFile.exists()) {
+                    payslipFile.delete()
+                    Log.d("CustomerRepo", "Deleted local payslip cache")
+                }
+            } catch (e: Exception) {
+                Log.e("CustomerRepo", "Error deleting payslip cache", e)
+            }
+        }
+
         val entity = ProfileEntity(
             id = data.id,
             userId = data.userId,
@@ -82,10 +95,10 @@ class CustomerRepositoryImpl @Inject constructor(
             accountHolderName = data.accountHolderName,
             ktpImagePath = data.ktpImagePath,
             selfieImagePath = data.selfieImagePath,
-            payslipImagePath = data.payslipImagePath,
+            payslipImagePath = data.payslipImagePath, // Will be null if deleted
             localKtpPath = localKtp,
             localSelfiePath = localSelfie,
-            localPayslipPath = localPayslip,
+            localPayslipPath = localPayslip, // Will be null if deleted
             emergencyContactsJson = gson.toJson(data.emergencyContacts),
             createdAt = data.createdAt,
         )
@@ -115,7 +128,9 @@ class CustomerRepositoryImpl @Inject constructor(
             accountHolderName = entity.accountHolderName,
             ktpImagePath = entity.localKtpPath ?: entity.ktpImagePath,
             selfieImagePath = entity.localSelfiePath ?: entity.selfieImagePath,
-            payslipImagePath = entity.localPayslipPath ?: entity.payslipImagePath,
+            // For payslip: prioritize server state (payslipImagePath) - if null (deleted by backend), return null
+            // Only use local cache if server indicates payslip exists
+            payslipImagePath = if (entity.payslipImagePath.isNullOrBlank()) null else (entity.localPayslipPath ?: entity.payslipImagePath),
             emergencyContacts = contacts,
             createdAt = entity.createdAt,
         )
@@ -148,6 +163,7 @@ class CustomerRepositoryImpl @Inject constructor(
 
             if (response.success && response.data != null) {
                 // Update local DB after success, FORCE download new images
+                // Backend now correctly handles deletePayslip flag and returns null payslipImagePath
                 saveProfileToDb(response.data, forceDownload = true)
                 Result.success(response.data)
             } else {
@@ -271,11 +287,15 @@ class CustomerRepositoryImpl @Inject constructor(
     /**
      * Fungsi untuk Resize (Maks 1024px) dan Kompres (60% Quality)
      * Ini akan memastikan ukuran file di bawah 300KB namun tetap tajam.
+     * Juga menangani orientasi EXIF agar foto tidak miring.
      */
     private fun compressAndResizeImage(file: File): RequestBody {
         return try {
             val options = BitmapFactory.Options()
             var bitmap = BitmapFactory.decodeFile(file.path, options)
+
+            // 0. Fix EXIF orientation - Rotate bitmap if needed based on EXIF data
+            bitmap = fixBitmapOrientation(file.path, bitmap)
 
             // 1. Resize: Batasi dimensi maksimal ke 1024px
             val maxSize = 1024
@@ -309,6 +329,76 @@ class CustomerRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e("CustomerRepo", "Gagal olah ${file.name}, kirim asli", e)
             file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+        }
+    }
+
+    /**
+     * Fix bitmap orientation based on EXIF data.
+     * Camera photos often have rotation metadata that needs to be applied
+     * to display the image in the correct portrait orientation.
+     */
+    private fun fixBitmapOrientation(imagePath: String, bitmap: Bitmap): Bitmap {
+        return try {
+            val exifInterface = android.media.ExifInterface(imagePath)
+            val orientation = exifInterface.getAttributeInt(
+                android.media.ExifInterface.TAG_ORIENTATION,
+                android.media.ExifInterface.ORIENTATION_UNDEFINED,
+            )
+
+            val rotationDegrees = when (orientation) {
+                android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+                android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+                android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+                android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> 0f // Will flip
+                android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> 0f // Will flip
+                else -> 0f
+            }
+
+            if (rotationDegrees == 0f &&
+                orientation != android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL &&
+                orientation != android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL
+            ) {
+                // No rotation needed
+                Log.d("CustomerRepo", "Image already in correct orientation")
+                return bitmap
+            }
+
+            val matrix = android.graphics.Matrix()
+
+            // Apply rotation
+            if (rotationDegrees != 0f) {
+                matrix.postRotate(rotationDegrees)
+                Log.d("CustomerRepo", "Rotating image by $rotationDegrees degrees")
+            }
+
+            // Apply flip if needed
+            when (orientation) {
+                android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> {
+                    matrix.postScale(-1f, 1f)
+                    Log.d("CustomerRepo", "Flipping image horizontally")
+                }
+                android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
+                    matrix.postScale(1f, -1f)
+                    Log.d("CustomerRepo", "Flipping image vertically")
+                }
+            }
+
+            // Create rotated/flipped bitmap
+            val rotatedBitmap = Bitmap.createBitmap(
+                bitmap,
+                0,
+                0,
+                bitmap.width,
+                bitmap.height,
+                matrix,
+                true,
+            )
+
+            Log.d("CustomerRepo", "Fixed orientation: ${bitmap.width}x${bitmap.height} -> ${rotatedBitmap.width}x${rotatedBitmap.height}")
+            rotatedBitmap
+        } catch (e: Exception) {
+            Log.e("CustomerRepo", "Error fixing orientation", e)
+            bitmap
         }
     }
 
