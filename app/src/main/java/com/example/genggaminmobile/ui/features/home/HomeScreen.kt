@@ -132,12 +132,41 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         val totalLimit = uiState.loanLimits.sumOf { it.availableLimit }
-                        Text(
-                            text = currencyFormatter.format(totalLimit),
-                            color = Color.White,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = currencyFormatter.format(totalLimit),
+                                color = Color.White,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            if (totalLimit == 0L && uiState.isLoggedIn) {
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Button(
+                                    onClick = onNavigateToLoanApp,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color.White.copy(alpha = 0.2f),
+                                        contentColor = Color.White,
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(32.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                ) {
+                                    Text(
+                                        "Ajukan Limit",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                        }
+                        if (totalLimit == 0L && uiState.isLoggedIn) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Ajukan pinjaman untuk mengaktifkan limit Anda",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.8f),
+                            )
+                        }
                         if (!uiState.isLoggedIn) {
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(

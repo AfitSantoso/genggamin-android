@@ -1,8 +1,10 @@
 package com.example.genggaminmobile
 
 import android.app.Application
+import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.cloudinary.android.MediaManager
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -19,7 +21,21 @@ class GenggaminApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        initCloudinary()
         setupSyncWorker()
+    }
+
+    private fun initCloudinary() {
+        try {
+            val config = mapOf(
+                "cloud_name" to "dgzpcgfgk",
+                "secure" to true,
+            )
+            MediaManager.init(this, config)
+            Log.d("GenggaminApp", "Cloudinary MediaManager initialized successfully")
+        } catch (e: Exception) {
+            Log.e("GenggaminApp", "Failed to initialize Cloudinary: ${e.message}")
+        }
     }
 
     private fun setupSyncWorker() {

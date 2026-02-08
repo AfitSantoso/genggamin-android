@@ -1,11 +1,13 @@
 package com.example.genggaminmobile.core.di
 
 import com.example.genggaminmobile.data.repository.AuthRepositoryImpl
+import com.example.genggaminmobile.data.repository.ContractRepositoryImpl
 import com.example.genggaminmobile.data.repository.CustomerRepositoryImpl
 import com.example.genggaminmobile.data.repository.LoanRepositoryImpl
 import com.example.genggaminmobile.data.repository.NotificationRepositoryImpl
 import com.example.genggaminmobile.data.repository.PlafondRepositoryImpl
 import com.example.genggaminmobile.domain.repository.AuthRepository
+import com.example.genggaminmobile.domain.repository.ContractRepository
 import com.example.genggaminmobile.domain.repository.CustomerRepository
 import com.example.genggaminmobile.domain.repository.LoanRepository
 import com.example.genggaminmobile.domain.repository.NotificationRepository
@@ -38,4 +40,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindNotificationRepository(notificationRepositoryImpl: NotificationRepositoryImpl): NotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindContractRepository(contractRepositoryImpl: ContractRepositoryImpl): ContractRepository
 }

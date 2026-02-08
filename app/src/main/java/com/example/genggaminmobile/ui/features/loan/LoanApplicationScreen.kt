@@ -80,8 +80,28 @@ fun LoanApplicationScreen(
         }
     }
 
+    // Show success dialog after loan is submitted
     if (uiState.success) {
-        ModernLoanSuccessDialog(onDismiss = onBack)
+        ModernLoanSuccessDialog(
+            onDismiss = onBack,
+            isOffline = uiState.isOfflineSubmission,
+            offlineMessage = uiState.offlineMessage,
+        )
+    }
+
+    // Show contract dialog when user clicks apply button
+    if (uiState.showContractDialog) {
+        val contractInfo = viewModel.getContractDisplayInfo()
+        if (contractInfo != null) {
+            LoanContractDialog(
+                contractInfo = contractInfo,
+                isLoading = uiState.isContractLoading,
+                onDismiss = viewModel::dismissContractDialog,
+                onConfirm = { signaturePath ->
+                    viewModel.onContractSigned(signaturePath)
+                },
+            )
+        }
     }
 
     Scaffold(
@@ -137,6 +157,14 @@ fun LoanApplicationScreen(
                             )
 
                             Spacer(modifier = Modifier.height(24.dp))
+
+                            // Show payslip requirement warning for business loans
+                            if (uiState.requiresPayslip && !uiState.hasPayslip) {
+                                PayslipRequirementAlert(
+                                    plafondTitle = uiState.selectedPlafond?.title ?: "",
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
 
                             if (uiState.selectedPlafond != null) {
                                 AnimatedVisibility(
@@ -198,18 +226,24 @@ fun LoanApplicationScreen(
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     Button(
-                        onClick = viewModel::submitLoan,
+                        onClick = viewModel::onApplyLoanClicked,
                         modifier = Modifier
                             .padding(horizontal = 20.dp, vertical = 16.dp)
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
-                        enabled = uiState.selectedPlafond != null && !uiState.isLoading,
+                        enabled = uiState.selectedPlafond != null && !uiState.isLoading && !uiState.isContractLoading,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 2.dp)
                         } else {
+                            Icon(
+                                Icons.Default.Draw,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Ajukan Pinjaman Sekarang", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, letterSpacing = 0.5.sp)
                         }
                     }
@@ -629,8 +663,108 @@ fun EmptySelectionState() {
     }
 }
 
+/**
+ * Alert component that warns users about payslip requirement for business loans.
+ * Displayed when a business loan plafond is selected but user hasn't uploaded payslip.
+ */
 @Composable
-fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
+fun PayslipRequirementAlert(
+    plafondTitle: String,
+    modifier: Modifier = Modifier,
+) {
+    // Color palette
+    val warningColor = Color(0xFFFF9800)
+    val warningBgColor = Color(0xFFFFF3E0)
+    val warningTextColor = Color(0xFFE65100)
+
+    ElevatedCard(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = warningBgColor),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            // Warning Icon
+            Surface(
+                color = warningColor.copy(alpha = 0.2f),
+                shape = CircleShape,
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = warningColor,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Content
+            Column(modifier = Modifier.weight(1f)) {
+                // Title
+                Text(
+                    text = "Slip Gaji Diperlukan",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = warningTextColor,
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Description
+                Text(
+                    text = "Untuk mengajukan \"$plafondTitle\", Anda wajib melampirkan foto slip gaji sebagai bukti penghasilan.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = warningTextColor.copy(alpha = 0.8f),
+                    lineHeight = 20.sp,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Action hint
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.ArrowForward,
+                        contentDescription = null,
+                        tint = warningColor,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Silakan unggah slip gaji melalui menu Profil",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = warningTextColor,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ModernLoanSuccessDialog(
+    onDismiss: () -> Unit,
+    isOffline: Boolean = false,
+    offlineMessage: String? = null,
+) {
+    val iconColor = if (isOffline) Color(0xFFFF9800) else Color(0xFF4CAF50)
+    val iconBgColor = if (isOffline) Color(0xFFFFF3E0) else Color(0xFFE8F5E9)
+    val icon = if (isOffline) Icons.Default.CloudQueue else Icons.Default.CheckCircle
+    val title = if (isOffline) "Pengajuan Tersimpan" else "Pengajuan Terkirim!"
+
+    val message = when {
+        isOffline && !offlineMessage.isNullOrBlank() -> offlineMessage
+        isOffline -> "Pengajuan Anda tersimpan dan akan otomatis terkirim saat koneksi internet tersedia."
+        else -> "Pinjaman Anda sedang kami proses. Tim kami akan segera melakukan verifikasi data Anda dalam waktu 1x24 jam."
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -644,22 +778,53 @@ fun ModernLoanSuccessDialog(onDismiss: () -> Unit) {
         },
         icon = {
             Surface(
-                color = Color(0xFFE8F5E9),
+                color = iconBgColor,
                 shape = CircleShape,
                 modifier = Modifier.size(80.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(50.dp))
+                    Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(50.dp))
                 }
             }
         },
-        title = { Text("Pengajuan Terkirim!", fontWeight = FontWeight.Black, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
+        title = { Text(title, fontWeight = FontWeight.Black, textAlign = androidx.compose.ui.text.style.TextAlign.Center) },
         text = {
-            Text(
-                "Pinjaman Anda sedang kami proses. Tim kami akan segera melakukan verifikasi data Anda dalam waktu 1x24 jam.",
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    message,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                if (isOffline) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Surface(
+                        color = Color(0xFFFFF3E0),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.Info,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9800),
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Mode Offline",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFE65100),
+                            )
+                        }
+                    }
+                }
+            }
         },
         shape = RoundedCornerShape(32.dp),
         containerColor = MaterialTheme.colorScheme.surface,

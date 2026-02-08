@@ -22,6 +22,8 @@ data class CustomerProfileRequest(
     @SerializedName("accountNumber") val accountNumber: String,
     @SerializedName("accountHolderName") val accountHolderName: String,
     @SerializedName("emergencyContact") val emergencyContact: EmergencyContactDto,
+    // Flag to signal backend to delete payslip if user explicitly removed it
+    @SerializedName("deletePayslip") val deletePayslip: Boolean = false,
 )
 
 data class CustomerProfileResponse(

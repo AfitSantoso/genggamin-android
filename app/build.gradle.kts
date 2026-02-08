@@ -103,6 +103,12 @@ dependencies {
     // Lottie for animations
     implementation("com.airbnb.android:lottie-compose:6.3.0")
 
+    // Cloudinary for cloud storage
+    implementation("com.cloudinary:cloudinary-android:3.0.2")
+
+    // iText for PDF generation
+    implementation("com.itextpdf:itext7-core:7.2.5")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
