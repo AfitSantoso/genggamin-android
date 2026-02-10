@@ -13,6 +13,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
+import com.example.genggaminmobile.R
 import com.example.genggaminmobile.data.local.entity.ContractStatus
 import com.example.genggaminmobile.data.local.entity.PendingContractEntity
 import com.example.genggaminmobile.data.model.dto.CustomerProfileResponse
@@ -117,7 +118,7 @@ class LoanViewModel @Inject constructor(
                 )
             } else {
                 _uiState.value = _uiState.value.copy(
-                    error = "Gagal memuat data pinjaman",
+                    error = context.getString(R.string.error_loan_load_failed),
                     isLoading = false,
                 )
             }
@@ -200,48 +201,48 @@ class LoanViewModel @Inject constructor(
 
         // Validate inputs before showing contract
         if (state.selectedPlafond == null) {
-            _uiState.value = state.copy(error = "Pilih plafond terlebih dahulu")
+            _uiState.value = state.copy(error = context.getString(R.string.error_select_plafond))
             return
         }
 
         if (state.customerProfile == null) {
-            _uiState.value = state.copy(error = "Profil belum lengkap. Silakan lengkapi profil Anda terlebih dahulu.")
+            _uiState.value = state.copy(error = context.getString(R.string.error_profile_incomplete))
             return
         }
 
         // Validate payslip requirement for business loans
         if (state.requiresPayslip && !state.hasPayslip) {
             _uiState.value = state.copy(
-                error = "Pinjaman usaha memerlukan foto slip gaji. Silakan unggah slip gaji di halaman Profil terlebih dahulu.",
+                error = context.getString(R.string.error_business_loan_payslip),
             )
             return
         }
 
         if (state.requiresPayslip && !isNetworkAvailable()) {
             _uiState.value = state.copy(
-                error = "Pinjaman usaha memerlukan koneksi internet untuk verifikasi slip gaji. Silakan hubungkan ke internet dan coba lagi.",
+                error = context.getString(R.string.error_business_loan_network),
             )
             return
         }
 
         if (amount < 400000 || amount > state.selectedPlafond.maxAmount) {
-            _uiState.value = state.copy(error = "Minimal pengajuan pinjaman adalah Rp 400.000 dan maksimal sesuai limit")
+            _uiState.value = state.copy(error = context.getString(R.string.error_loan_amount_range))
             return
         }
 
         val limit = state.selectedLimit
         if (limit != null && amount > limit.availableLimit) {
-            _uiState.value = state.copy(error = "Jumlah pinjaman melebihi sisa limit Anda")
+            _uiState.value = state.copy(error = context.getString(R.string.error_loan_amount_limit))
             return
         }
 
         if (tenor <= 0 || tenor > state.selectedPlafond.tenorMonth) {
-            _uiState.value = state.copy(error = "Tenor tidak valid")
+            _uiState.value = state.copy(error = context.getString(R.string.error_tenor_invalid))
             return
         }
 
         if (state.purposeInput.isBlank()) {
-            _uiState.value = state.copy(error = "Mohon isi tujuan pinjaman")
+            _uiState.value = state.copy(error = context.getString(R.string.error_purpose_empty))
             return
         }
 
@@ -349,14 +350,14 @@ class LoanViewModel @Inject constructor(
                         showContractDialog = false,
                         success = true,
                         isOfflineSubmission = true,
-                        offlineMessage = "Pengajuan tersimpan. Akan otomatis terkirim saat koneksi tersedia.",
+                        offlineMessage = context.getString(R.string.msg_submission_offline_saved),
                     )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Contract generation error", e)
                 _uiState.value = _uiState.value.copy(
                     isContractLoading = false,
-                    error = "Gagal memproses kontrak: ${e.message}",
+                    error = context.getString(R.string.error_contract_process_failed, e.message),
                 )
             }
         }
@@ -396,7 +397,7 @@ class LoanViewModel @Inject constructor(
                         showContractDialog = false,
                         success = true,
                         isOfflineSubmission = true,
-                        offlineMessage = "Kontrak diunggah. Pengajuan akan otomatis diproses.",
+                        offlineMessage = context.getString(R.string.msg_submission_uploaded),
                     )
                 }
             } else {
@@ -409,7 +410,7 @@ class LoanViewModel @Inject constructor(
                     showContractDialog = false,
                     success = true,
                     isOfflineSubmission = true,
-                    offlineMessage = "Pengajuan tersimpan. Akan otomatis terkirim saat koneksi stabil.",
+                    offlineMessage = context.getString(R.string.msg_submission_offline_stable),
                 )
             }
         } catch (e: Exception) {
@@ -421,7 +422,7 @@ class LoanViewModel @Inject constructor(
                 showContractDialog = false,
                 success = true,
                 isOfflineSubmission = true,
-                offlineMessage = "Pengajuan tersimpan. Akan otomatis terkirim saat koneksi tersedia.",
+                offlineMessage = context.getString(R.string.msg_submission_offline_saved),
             )
         }
     }

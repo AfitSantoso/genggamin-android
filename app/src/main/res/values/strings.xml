@@ -60,6 +60,57 @@
     <string name="loan_app_success">Pengajuan Berhasil!</string>
     <string name="loan_app_success_msg">Pengajuan pinjaman Anda telah diterima dan akan segera diproses.</string>
 
+    <!-- Loan Application Updates -->
+    <string name="loan_app_select_product">Pilih Produk Pinjaman</string>
+    <string name="loan_alert_payslip_title">Slip Gaji Diperlukan</string>
+    <string name="loan_alert_payslip_desc">Untuk mengajukan "%1$s", Anda wajib melampirkan foto slip gaji sebagai bukti penghasilan.</string>
+    <string name="loan_alert_payslip_action">Silakan unggah slip gaji melalui menu Profil</string>
+    <string name="loan_dialog_offline_title">Pengajuan Tersimpan</string>
+    <string name="loan_dialog_success_title">Pengajuan Terkirim!</string>
+    <string name="loan_dialog_offline_desc">Pengajuan Anda tersimpan dan akan otomatis terkirim saat koneksi internet tersedia.</string>
+    <string name="loan_dialog_success_desc">Pinjaman Anda sedang kami proses. Tim kami akan segera melakukan verifikasi data Anda dalam waktu 1x24 jam.</string>
+    <string name="loan_dialog_button_status">Lihat Status Pinjaman</string>
+    <string name="loan_header_title">Solusi Keuangan Anda</string>
+    <string name="loan_header_subtitle">Proses cepat, aman, dan terpercaya</string>
+    <string name="loan_card_interest">Bunga %1$s%%</string>
+    <string name="loan_card_limit_label">Sisa Limit Tersedia</string>
+    <string name="loan_form_title">Formulir Pengajuan</string>
+    <string name="loan_input_amount_label">Jumlah Pinjaman</string>
+    <string name="loan_input_amount_support">Min: Rp 400.000, Max: %1$s</string>
+    <string name="loan_input_tenor_label">Jangka Waktu (Bulan)</string>
+    <string name="loan_input_tenor_support">Maksimal %1$d Bulan</string>
+    <string name="loan_input_purpose_label">Tujuan Penggunaan Dana</string>
+    <string name="loan_sim_title">Estimasi Cicilan</string>
+    <string name="loan_sim_monthly">Angsuran Per Bulan</string>
+    <string name="loan_sim_total_interest">Total Bunga</string>
+    <string name="loan_sim_total_repayment">Total Bayar</string>
+    <string name="loan_empty_title">Mulai Pengajuan Anda</string>
+    <string name="loan_empty_desc">Pilih salah satu produk pinjaman di atas\nuntuk melihat estimasi dan simulasi.</string>
+    <string name="loan_button_apply_now">Ajukan Pinjaman Sekarang</string>
+    <string name="loan_mode_offline">Mode Offline</string>
+    <string name="loan_purpose_business">Modal Usaha</string>
+    <string name="loan_purpose_education">Biaya Pendidikan</string>
+    <string name="loan_purpose_health">Kesehatan</string>
+    <string name="loan_purpose_renovation">Renovasi Rumah</string>
+    <string name="loan_purpose_consumption">Konsumsi Rumah Tangga</string>
+    <string name="loan_purpose_other">Lainnya</string>
+    <string name="loan_purpose_detail_label">Detail Tujuan</string>
+
+    <!-- Loan ViewModel Errors -->
+    <string name="error_loan_load_failed">Gagal memuat data pinjaman</string>
+    <string name="error_select_plafond">Pilih plafond terlebih dahulu</string>
+    <string name="error_profile_incomplete">Profil belum lengkap. Silakan lengkapi profil Anda terlebih dahulu.</string>
+    <string name="error_business_loan_payslip">Pinjaman usaha memerlukan foto slip gaji. Silakan unggah slip gaji di halaman Profil terlebih dahulu.</string>
+    <string name="error_business_loan_network">Pinjaman usaha memerlukan koneksi internet untuk verifikasi slip gaji. Silakan hubungkan ke internet dan coba lagi.</string>
+    <string name="error_loan_amount_range">Minimal pengajuan pinjaman adalah Rp 400.000 dan maksimal sesuai limit</string>
+    <string name="error_loan_amount_limit">Jumlah pinjaman melebihi sisa limit Anda</string>
+    <string name="error_tenor_invalid">Tenor tidak valid</string>
+    <string name="error_purpose_empty">Mohon isi tujuan pinjaman</string>
+    <string name="msg_submission_offline_saved">Pengajuan tersimpan. Akan otomatis terkirim saat koneksi tersedia.</string>
+    <string name="msg_submission_uploaded">Kontrak diunggah. Pengajuan akan otomatis diproses.</string>
+    <string name="msg_submission_offline_stable">Pengajuan tersimpan. Akan otomatis terkirim saat koneksi stabil.</string>
+    <string name="error_contract_process_failed">Gagal memproses kontrak: %1$s</string>
+
     <!-- Notification -->
     <string name="notification_title">Notifikasi</string>
     <string name="notification_empty">Belum ada notifikasi</string>
@@ -75,6 +126,8 @@
     <string name="contract_loading">Memproses kontrak...</string>
     <string name="contract_error_no_signature">Silakan buat tanda tangan Anda terlebih dahulu</string>
     <string name="contract_error_not_agreed">Anda harus menyetujui syarat \u0026 ketentuan untuk melanjutkan</string>
+    <string name="contract_error_signature">Silakan buat tanda tangan Anda terlebih dahulu</string>
+    <string name="contract_error_terms">Anda harus menyetujui syarat \u0026 ketentuan untuk melanjutkan</string>
     <string name="contract_upload_success">Kontrak berhasil disimpan</string>
     <string name="contract_upload_failed">Gagal menyimpan kontrak. Silakan coba lagi.</string>
 

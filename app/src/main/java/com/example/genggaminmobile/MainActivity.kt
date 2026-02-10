@@ -2,9 +2,11 @@ package com.example.genggaminmobile
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,9 +14,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import com.example.genggaminmobile.core.navigation.NavGraph
+import com.example.genggaminmobile.core.util.SystemCheck
 import com.example.genggaminmobile.ui.theme.GenggaminmobileTheme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -39,6 +43,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Prevent Screen Capture / Screen Recording
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
+
+        // Root Detection Check
+        if (SystemCheck.isDeviceRooted(this)) {
+            showRootedDeviceAlert()
+            return // Stop initialization
+        }
+
         enableEdgeToEdge()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -96,6 +112,18 @@ class MainActivity : ComponentActivity() {
                 // Lokasi berhasil didapat.
                 // Di sini bisa disimpan ke repository atau SharedPref jika diperlukan secara global.
             }
+    }
+
+    private fun showRootedDeviceAlert() {
+        AlertDialog.Builder(this)
+            .setTitle("Security Warning")
+            .setMessage("This device appears to be rooted. For security reasons, this application cannot run on rooted devices.")
+            .setCancelable(false)
+            .setPositiveButton("Exit") { _, _ ->
+                finishAffinity()
+                System.exit(0)
+            }
+            .show()
     }
 }
 

@@ -190,15 +190,17 @@ fun LoanContractDialog(
                 }
 
                 // Footer with Submit Button
+                val signatureError = stringResource(R.string.contract_error_signature)
+                val termsError = stringResource(R.string.contract_error_terms)
                 ContractDialogFooter(
                     isLoading = isLoading,
                     onSubmit = {
                         when {
                             !hasSignature -> {
-                                showError = "Silakan buat tanda tangan Anda terlebih dahulu"
+                                showError = signatureError
                             }
                             !isAgreed -> {
-                                showError = "Anda harus menyetujui syarat & ketentuan untuk melanjutkan"
+                                showError = termsError
                             }
                             else -> {
                                 showError = null
