@@ -2,9 +2,9 @@ name: Code Quality Check
 
 on:
   push:
-    branches: [ "ver2" ]
+    branches: [ "ver2", "kontrak" ]
   pull_request:
-    branches: [ "ver2" ]
+    branches: [ "ver2", "kontrak" ]
 
 jobs:
   check:
@@ -29,3 +29,6 @@ jobs:
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest
+
+      - name: Build Application
+        run: ./gradlew assembleDebug
