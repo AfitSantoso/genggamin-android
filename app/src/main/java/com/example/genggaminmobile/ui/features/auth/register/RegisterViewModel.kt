@@ -16,6 +16,7 @@ class RegisterViewModel
 @Inject
 constructor(
     private val registerUseCase: RegisterUseCase,
+    private val authRepository: com.example.genggaminmobile.domain.repository.AuthRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
@@ -68,29 +69,66 @@ constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            registerUseCase(
-                username = currentState.username,
-                email = currentState.email,
-                password = currentState.password,
-                fullName = currentState.fullName,
-            ).onSuccess {
+            // 1. Call Register
+            val registerResult = runCatching {
+                registerUseCase(
+                    username = currentState.username,
+                    email = currentState.email,
+                    password = currentState.password,
+                    fullName = currentState.fullName,
+                )
+            }
+
+            registerResult.fold(
+                onSuccess = {
+                    // 2. Register success, now auto-login
+                    // We assume register use case returns success but might not return token directly if it follows clean architecture returning Result<Unit> or similar.
+                    // So we call login explicitly.
+                    loginAfterRegister()
+                },
+                onFailure = { error ->
+                    handleError(error)
+                },
+            )
+        }
+    }
+
+    private suspend fun loginAfterRegister() {
+        val currentState = _uiState.value
+        authRepository.login(
+            username = currentState.username,
+            password = currentState.password,
+            fcmToken = null, // Or fetch FCM token if needed, passing null for now as often it's optional or handled inside repo
+        ).fold(
+            onSuccess = {
+                // 3. Login success, now we are fully signed in.
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
-            }.onFailure { error ->
-                val errorMessage = error.message ?: "Registrasi gagal, silakan coba lagi"
-
-                _uiState.update { state ->
-                    // Logika pemetaan error dari backend ke field spesifik
-                    when {
-                        errorMessage.contains("Email", ignoreCase = true) ->
-                            state.copy(isLoading = false, emailError = errorMessage)
-
-                        errorMessage.contains("Username", ignoreCase = true) ->
-                            state.copy(isLoading = false, usernameError = errorMessage)
-
-                        else ->
-                            state.copy(isLoading = false, error = errorMessage)
-                    }
+            },
+            onFailure = { error ->
+                // Login failed after registration succeeded.
+                // We should probably still navigate to login or show error.
+                // Ideally, if register succeeds but login fails, user exists.
+                // So we can tell them to login manually or show the specific error.
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Registrasi berhasil, namun gagal login otomatis: ${error.message}",
+                    )
                 }
+            },
+        )
+    }
+
+    private fun handleError(error: Throwable) {
+        val errorMessage = error.message ?: "Registrasi gagal, silakan coba lagi"
+        _uiState.update { state ->
+            when {
+                errorMessage.contains("Email", ignoreCase = true) ->
+                    state.copy(isLoading = false, emailError = errorMessage)
+                errorMessage.contains("Username", ignoreCase = true) ->
+                    state.copy(isLoading = false, usernameError = errorMessage)
+                else ->
+                    state.copy(isLoading = false, error = errorMessage)
             }
         }
     }

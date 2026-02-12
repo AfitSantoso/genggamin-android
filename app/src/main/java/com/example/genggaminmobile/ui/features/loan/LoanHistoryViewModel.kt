@@ -128,7 +128,7 @@ constructor(
             id = -id, // Negative ID to distinguish from real loans
             amount = amount,
             tenorMonths = tenor,
-            purpose = purpose,
+            purpose = if (!errorMessage.isNullOrBlank()) "$purpose (Error: $errorMessage)" else purpose,
             plafondId = plafondId,
             status = displayStatus,
             interestRate = interestRate,

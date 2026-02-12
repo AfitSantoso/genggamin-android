@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.genggaminmobile.R
 import com.example.genggaminmobile.data.model.dto.CustomerProfileRequest
 import com.example.genggaminmobile.data.model.dto.EmergencyContactDto
 import java.io.File
@@ -54,6 +56,13 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+
+    // Direct to login if not logged in
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (!uiState.isLoggedIn) {
+            onLogout()
+        }
+    }
 
     // Form State
     var nik by remember { mutableStateOf("") }
@@ -102,7 +111,7 @@ fun ProfileScreen(
             dob = p.dateOfBirth
             pob = p.placeOfBirth
             address = p.address
-            phone = p.customerPhone
+            phone = p.customerPhone.replace(Regex("^(\\+62|62|0)"), "")
             income = formatCurrencyInput(p.monthlyIncome.toString())
             occupation = p.occupation
             currentAddress = p.currentAddress
@@ -217,10 +226,35 @@ fun ProfileScreen(
 
                                 item {
                                     when (uiState.currentStep) {
-                                        1 -> PersonalDataStep(nik, { nik = it }, dob, { dob = it }, pob, { pob = it }, address, { address = it }, phone, { phone = it })
+                                        1 -> PersonalDataStep(
+                                            nik, { if (it.length <= 16 && it.all { char -> char.isDigit() }) nik = it },
+                                            dob, { dob = it },
+                                            pob, { pob = it },
+                                            address, { address = it },
+                                            phone, { input ->
+                                                // Strip leading 0 if present, as prefix is +62
+                                                val cleaned = if (input.startsWith("0")) input.substring(1) else input
+                                                if (cleaned.length <= 15 && cleaned.all { char -> char.isDigit() }) {
+                                                    phone = cleaned
+                                                }
+                                            },
+                                        )
                                         2 -> FinancialDataStep(income, { income = formatCurrencyInput(it) }, occupation, { occupation = it }, currentAddress, { currentAddress = it }, motherName, { motherName = it })
                                         3 -> BankDataStep(bankAccount, { bankAccount = it }, bankHolder, { bankHolder = it })
-                                        4 -> EmergencyContactStep(emergencyName, { emergencyName = it }, emergencyRelation, { emergencyRelation = it }, emergencyPhone, { emergencyPhone = it })
+                                        4 -> EmergencyContactStep(
+                                            name = emergencyName,
+                                            onNameChange = { emergencyName = it },
+                                            relation = emergencyRelation,
+                                            onRelationChange = { emergencyRelation = it },
+                                            phone = emergencyPhone,
+                                            onPhoneChange = { input ->
+                                                // Strip leading 0 if present, as prefix is +62
+                                                val cleaned = if (input.startsWith("0")) input.substring(1) else input
+                                                if (cleaned.length <= 15 && cleaned.all { char -> char.isDigit() }) {
+                                                    emergencyPhone = cleaned
+                                                }
+                                            },
+                                        )
                                         5 -> DocumentUploadStep(
                                             ktp = ktpFile,
                                             onKtpSelect = {
@@ -299,7 +333,9 @@ fun ProfileScreen(
                                                     emergencyContact = EmergencyContactDto(name = emergencyName, relationship = emergencyRelation, phone = emergencyPhone),
                                                     deletePayslip = shouldDeletePayslip,
                                                 )
-                                                viewModel.submitProfile(request, ktpFile, selfieFile, payslipFile)
+                                                // Prepend +62 to phone if not already handled by prefix logic (phone state only has digits)
+                                                val finalRequest = request.copy(phone = if (phone.startsWith("+62")) phone else "+62$phone")
+                                                viewModel.submitProfile(finalRequest, ktpFile, selfieFile, payslipFile)
                                             }
                                         },
                                         enabled = isStepValid && !uiState.isSubmitting, // Button is disabled if invalid or submitting
@@ -666,14 +702,47 @@ fun ModernSuccessDialog(onDismiss: () -> Unit) {
 }
 
 @Composable
-fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, onDobChange: (String) -> Unit, pob: String, onPobChange: (String) -> Unit, address: String, onAddressChange: (String) -> Unit, phone: String, onPhoneChange: (String) -> Unit) {
+fun PersonalDataStep(
+    nik: String,
+    onNikChange: (String) -> Unit,
+    dob: String,
+    onDobChange: (String) -> Unit,
+    pob: String,
+    onPobChange: (String) -> Unit,
+    address: String,
+    onAddressChange: (String) -> Unit,
+    phone: String,
+    onPhoneChange: (String) -> Unit,
+) {
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernTextField(value = nik, onValueChange = onNikChange, label = "NIK (Wajib 16 Digit)", icon = Icons.Outlined.Badge, keyboardType = KeyboardType.Number)
+        ModernTextField(
+            value = nik,
+            onValueChange = onNikChange,
+            label = "NIK (Wajib 16 Digit)",
+            icon = Icons.Outlined.Badge,
+            keyboardType = KeyboardType.Number,
+            imeAction = androidx.compose.ui.text.input.ImeAction.Next,
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }),
+        )
 
         // Date of Birth with DatePicker
         val calendar = java.util.Calendar.getInstance()
         calendar.add(java.util.Calendar.YEAR, -18)
         val maxDate = calendar.timeInMillis
+
+        // Try to parse existing dob to millis for initial state
+        val initialDate = try {
+            if (dob.isNotEmpty()) {
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                sdf.parse(dob)?.time
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
 
         ModernDatePickerField(
             value = dob,
@@ -688,11 +757,38 @@ fun PersonalDataStep(nik: String, onNikChange: (String) -> Unit, dob: String, on
                     return year <= calendar.get(java.util.Calendar.YEAR)
                 }
             },
+            initialDateMillis = initialDate ?: maxDate,
         )
 
-        ModernTextField(value = pob, onValueChange = onPobChange, label = "Tempat Lahir", icon = Icons.Outlined.Place)
-        ModernTextField(value = address, onValueChange = onAddressChange, label = "Alamat Sesuai KTP", icon = Icons.Outlined.Home, singleLine = false, minLines = 2)
-        ModernTextField(value = phone, onValueChange = onPhoneChange, label = "Nomor Telepon", icon = Icons.Outlined.Phone, keyboardType = KeyboardType.Phone)
+        ModernTextField(
+            value = pob,
+            onValueChange = onPobChange,
+            label = "Tempat Lahir",
+            icon = Icons.Outlined.Place,
+            imeAction = androidx.compose.ui.text.input.ImeAction.Next,
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }),
+        )
+
+        ModernTextField(
+            value = address,
+            onValueChange = onAddressChange,
+            label = "Alamat Sesuai KTP",
+            icon = Icons.Outlined.Home,
+            singleLine = false,
+            minLines = 2,
+            // Multiline fields usually default to 'Return' for new line, specific Next behavior on multiline is tricky UX
+        )
+
+        ModernTextField(
+            value = phone,
+            onValueChange = onPhoneChange,
+            label = "Nomor Telepon",
+            icon = Icons.Outlined.Call,
+            keyboardType = KeyboardType.Phone,
+            prefix = "+62 ",
+            imeAction = androidx.compose.ui.text.input.ImeAction.Done,
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focusManager.clearFocus() }),
+        )
     }
 }
 
@@ -704,9 +800,13 @@ fun ModernDatePickerField(
     label: String,
     icon: ImageVector,
     selectableDates: SelectableDates = DatePickerDefaults.AllDates,
+    initialDateMillis: Long? = null,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(selectableDates = selectableDates)
+    val datePickerState = rememberDatePickerState(
+        selectableDates = selectableDates,
+        initialSelectedDateMillis = initialDateMillis,
+    )
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -766,7 +866,7 @@ fun ModernDatePickerField(
 @Composable
 fun FinancialDataStep(income: String, onIncomeChange: (String) -> Unit, occupation: String, onOccupationChange: (String) -> Unit, currentAddress: String, onCurrentAddressChange: (String) -> Unit, motherName: String, onMotherNameChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernTextField(value = income, onValueChange = onIncomeChange, label = "Pendapatan Per Bulan", icon = Icons.Outlined.Payments, keyboardType = KeyboardType.Number, prefix = "Rp ")
+        IncomeInput(value = income, onValueChange = onIncomeChange)
         OccupationInput(value = occupation, onValueChange = onOccupationChange)
         ModernTextField(value = motherName, onValueChange = onMotherNameChange, label = "Nama Ibu Kandung", icon = Icons.Outlined.Face)
         ModernTextField(value = currentAddress, onValueChange = onCurrentAddressChange, label = "Alamat Tinggal Sekarang", icon = Icons.Outlined.LocationOn, singleLine = false, minLines = 2)
@@ -776,7 +876,17 @@ fun FinancialDataStep(income: String, onIncomeChange: (String) -> Unit, occupati
 @Composable
 fun BankDataStep(account: String, onAccountChange: (String) -> Unit, holder: String, onHolderChange: (String) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ModernTextField(value = account, onValueChange = onAccountChange, label = "Nomor Rekening", icon = Icons.Outlined.Numbers, keyboardType = KeyboardType.Number)
+        ModernTextField(
+            value = account,
+            onValueChange = {
+                if (it.length <= 18 && it.all { char -> char.isDigit() }) {
+                    onAccountChange(it)
+                }
+            },
+            label = "Nomor Rekening",
+            icon = Icons.Outlined.Numbers,
+            keyboardType = KeyboardType.Number,
+        )
         ModernTextField(value = holder, onValueChange = onHolderChange, label = "Nama Pemilik Rekening", icon = Icons.Outlined.Person)
     }
 }
@@ -786,7 +896,14 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(value = name, onValueChange = onNameChange, label = "Nama Kontak Darurat", icon = Icons.Outlined.AccountCircle)
         ModernTextField(value = relation, onValueChange = onRelationChange, label = "Hubungan", icon = Icons.Outlined.People)
-        ModernTextField(value = phone, onValueChange = onPhoneChange, label = "Nomor Telepon", icon = Icons.Outlined.Call, keyboardType = KeyboardType.Phone)
+        ModernTextField(
+            value = phone,
+            onValueChange = onPhoneChange,
+            label = "Nomor Telepon",
+            icon = Icons.Outlined.Call,
+            keyboardType = KeyboardType.Phone,
+            prefix = "+62 ",
+        )
     }
 }
 
@@ -1211,6 +1328,8 @@ fun ModernTextField(
     prefix: String? = null,
     singleLine: Boolean = true,
     minLines: Int = 1,
+    imeAction: androidx.compose.ui.text.input.ImeAction = androidx.compose.ui.text.input.ImeAction.Default,
+    keyboardActions: androidx.compose.foundation.text.KeyboardActions = androidx.compose.foundation.text.KeyboardActions.Default,
 ) {
     OutlinedTextField(
         value = value,
@@ -1219,7 +1338,8 @@ fun ModernTextField(
         leadingIcon = { Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp)) },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = keyboardActions,
         prefix = if (prefix != null) {
             { Text(prefix) }
         } else {
@@ -1358,5 +1478,76 @@ fun formatCurrencyInput(input: String): String {
         NumberFormat.getNumberInstance(Locale("id", "ID")).format(parsed)
     } catch (e: Exception) {
         digits
+    }
+}
+
+@Composable
+fun IncomeInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    val incomeRanges = listOf(
+        stringResource(R.string.income_range_under_2m) to 1000000L,
+        stringResource(R.string.income_range_2m_4m) to 3000000L,
+        stringResource(R.string.income_range_4m_7m) to 5000000L,
+        stringResource(R.string.income_range_7m_10m) to 8000000L,
+        stringResource(R.string.income_range_10m_20m) to 15000000L,
+        stringResource(R.string.income_range_above_20m) to 20000000L,
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+
+    val numericValue = value.replace(".", "").toLongOrNull() ?: 0L
+    val selectedLabel = incomeRanges.find { it.second == numericValue }?.first
+        ?: if (numericValue > 0) "Rp ${NumberFormat.getNumberInstance(Locale("id", "ID")).format(numericValue)}" else ""
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = selectedLabel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Pendapatan Per Bulan") },
+            leadingIcon = { Icon(Icons.Outlined.Payments, null, modifier = Modifier.size(20.dp)) },
+            trailingIcon = {
+                Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.size(24.dp))
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = true },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            shape = RoundedCornerShape(16.dp),
+        )
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { expanded = true },
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface),
+        ) {
+            incomeRanges.forEach { (label, valAmount) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = {
+                        expanded = false
+                        val formatted = NumberFormat.getNumberInstance(Locale("id", "ID")).format(valAmount)
+                        onValueChange(formatted)
+                    },
+                )
+            }
+        }
     }
 }

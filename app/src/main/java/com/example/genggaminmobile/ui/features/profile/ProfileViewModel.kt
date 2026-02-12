@@ -25,6 +25,7 @@ data class ProfileUiState(
     val totalSteps: Int = 5,
     val isEditing: Boolean = false,
     val lastUpdated: Long = System.currentTimeMillis(),
+    val isLoggedIn: Boolean = true,
 )
 
 @HiltViewModel
@@ -37,7 +38,16 @@ class ProfileViewModel @Inject constructor(
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
+        checkLoginStatus()
         loadProfile()
+    }
+
+    private fun checkLoginStatus() {
+        viewModelScope.launch {
+            authRepository.getAuthToken().collect { token ->
+                _uiState.update { it.copy(isLoggedIn = !token.isNullOrBlank()) }
+            }
+        }
     }
 
     fun loadProfile() {

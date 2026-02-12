@@ -61,6 +61,40 @@ fun LoanApplicationScreen(
     val currencyFormatter = remember { NumberFormat.getCurrencyInstance(Locale("id", "ID")) }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
+    // Launcher for resolution (turning on GPS)
+    val resolutionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            // User enabled GPS
+            fetchCurrentLocation(fusedLocationClient, viewModel)
+        }
+    }
+
+    // Function to check settings and prompt user
+    fun checkLocationSettings(onSuccess: () -> Unit) {
+        val locationRequest = com.google.android.gms.location.LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000).build()
+        val builder = com.google.android.gms.location.LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+        val client: com.google.android.gms.location.SettingsClient = LocationServices.getSettingsClient(context)
+        val task = client.checkLocationSettings(builder.build())
+
+        task.addOnSuccessListener {
+            onSuccess()
+        }
+
+        task.addOnFailureListener { exception ->
+            if (exception is com.google.android.gms.common.api.ResolvableApiException) {
+                try {
+                    val intentSenderRequest = androidx.activity.result.IntentSenderRequest.Builder(exception.resolution).build()
+                    resolutionLauncher.launch(intentSenderRequest)
+                } catch (sendEx: Exception) {
+                    // Ignore the error.
+                }
+            }
+        }
+    }
+
     // Launcher for location permissions
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -68,7 +102,9 @@ fun LoanApplicationScreen(
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
             permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (granted) {
-            fetchCurrentLocation(fusedLocationClient, viewModel)
+            checkLocationSettings {
+                fetchCurrentLocation(fusedLocationClient, viewModel)
+            }
         }
     }
 
@@ -78,7 +114,9 @@ fun LoanApplicationScreen(
         val coarseGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
         if (fineGranted || coarseGranted) {
-            fetchCurrentLocation(fusedLocationClient, viewModel)
+            checkLocationSettings {
+                fetchCurrentLocation(fusedLocationClient, viewModel)
+            }
         } else {
             locationPermissionLauncher.launch(
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
@@ -325,12 +363,33 @@ private fun fetchCurrentLocation(
     fusedLocationClient: FusedLocationProviderClient,
     viewModel: LoanViewModel,
 ) {
-    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
-        .addOnSuccessListener { location ->
-            location?.let {
-                viewModel.updateLocation(it.latitude, it.longitude)
+    try {
+        // Use High Accuracy to trigger GPS
+        val cancellationTokenSource = com.google.android.gms.tasks.CancellationTokenSource()
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationTokenSource.token)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    viewModel.updateLocation(location.latitude, location.longitude)
+                } else {
+                    // Fallback to last known location if current location is null
+                    fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+                        lastLocation?.let {
+                            viewModel.updateLocation(it.latitude, it.longitude)
+                        }
+                    }
+                }
             }
-        }
+            .addOnFailureListener {
+                // Try last location on failure
+                fusedLocationClient.lastLocation.addOnSuccessListener { lastLocation ->
+                    lastLocation?.let {
+                        viewModel.updateLocation(it.latitude, it.longitude)
+                    }
+                }
+            }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
 }
 
 @Composable

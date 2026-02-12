@@ -41,7 +41,7 @@ fun LoanHistoryScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
     var selectedLoan by remember { mutableStateOf<Loan?>(null) }
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showDetailSheet by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }

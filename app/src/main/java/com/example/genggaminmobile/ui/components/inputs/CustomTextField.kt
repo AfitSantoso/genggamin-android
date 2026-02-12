@@ -22,6 +22,7 @@ fun CustomTextField(
     errorMessage: String? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    trailingIcon: @Composable (() -> Unit)? = null,
 ) {
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -33,6 +34,7 @@ fun CustomTextField(
             visualTransformation = visualTransformation,
             keyboardOptions = keyboardOptions,
             singleLine = true,
+            trailingIcon = trailingIcon,
         )
         if (isError && errorMessage != null) {
             Text(

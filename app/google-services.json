@@ -12,7 +12,20 @@
           "package_name": "com.example.genggaminmobile"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "926562784828-eisht4h65j0g7u3va1vess39ivf4m8p9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.genggaminmobile",
+            "certificate_hash": "b6eaf8b155976383592f5a604a967b80cbae29b1"
+          }
+        },
+        {
+          "client_id": "926562784828-316arit97i791egpso2t8qk9muuqq4nf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDwE8EXaBo7MjU82LcgO9r6nHlBy4S6ZEs"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "926562784828-316arit97i791egpso2t8qk9muuqq4nf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

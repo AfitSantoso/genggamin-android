@@ -20,13 +20,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.genggaminmobile.R
 import com.example.genggaminmobile.core.service.LoanTimerService
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -98,13 +99,7 @@ fun LoanProgressTrackerScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Countdown Timer Card - Now uses persistent end time
-            CountdownCard(
-                context = context,
-                loanId = loanId,
-                startTime = uiState.submissionTime,
-                status = uiState.status,
-            )
+            // Countdown Timer Card removed as requested
 
             // Progress Pulse Animation
             ProgressPulseSection(
@@ -133,46 +128,8 @@ fun CountdownCard(
     startTime: Long?,
     status: String,
 ) {
-    val targetTimeMinutes = 10
     val normalizedStatus = status.lowercase()
     val isFinalStatus = normalizedStatus in listOf("approved", "disbursed", "rejected", "cair", "disetujui", "ditolak")
-
-    // BEST PRACTICE: Simpan END TIME bukan sisa detik
-    // Menghitung endTime = startTime + 10 menit
-    val endTime = remember(startTime) {
-        if (startTime != null) {
-            startTime + (targetTimeMinutes * 60 * 1000L)
-        } else {
-            System.currentTimeMillis() + (targetTimeMinutes * 60 * 1000L)
-        }
-    }
-
-    // Calculate remaining time from END TIME (ini yang penting!)
-    // Tidak peduli aplikasi mati/restart, endTime tetap sama
-    var remainingSeconds by remember { mutableStateOf(0) }
-
-    // Update remaining time setiap detik berdasarkan END TIME
-    LaunchedEffect(endTime, isFinalStatus) {
-        if (!isFinalStatus && endTime > 0) {
-            while (true) {
-                val currentTime = System.currentTimeMillis()
-                val remaining = endTime - currentTime
-
-                remainingSeconds = if (remaining > 0) (remaining / 1000).toInt() else 0
-
-                if (remainingSeconds <= 0) break
-
-                delay(1000L)
-            }
-        } else if (isFinalStatus) {
-            // Final status - stop timer
-            remainingSeconds = 0
-        }
-    }
-
-    val minutes = remainingSeconds / 60
-    val seconds = remainingSeconds % 60
-    val progress = 1f - (remainingSeconds.toFloat() / (targetTimeMinutes * 60))
 
     Box(
         modifier = Modifier
@@ -205,16 +162,24 @@ fun CountdownCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Icon(
-                when {
-                    normalizedStatus in listOf("approved", "disbursed", "disetujui", "cair") -> Icons.Default.CheckCircle
-                    normalizedStatus in listOf("rejected", "ditolak") -> Icons.Default.Cancel
-                    else -> Icons.Default.Timer
-                },
-                contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size(36.dp),
-            )
+            if (isFinalStatus) {
+                Icon(
+                    imageVector = when {
+                        normalizedStatus in listOf("approved", "disbursed", "disetujui", "cair") -> Icons.Default.CheckCircle
+                        else -> Icons.Default.Cancel
+                    },
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(36.dp),
+                )
+            } else {
+                Icon(
+                    painter = painterResource(id = R.drawable.genggaminlogo),
+                    contentDescription = null,
+                    tint = Color.Unspecified, // Keep original colors of the logo
+                    modifier = Modifier.size(50.dp),
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -222,7 +187,7 @@ fun CountdownCard(
                 when {
                     normalizedStatus in listOf("approved", "disbursed", "disetujui", "cair") -> "Pengajuan Disetujui!"
                     normalizedStatus in listOf("rejected", "ditolak") -> "Pengajuan Ditolak"
-                    else -> "Estimasi Waktu Keputusan"
+                    else -> "Status Pengajuan"
                 },
                 color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.bodyMedium,
@@ -238,7 +203,6 @@ fun CountdownCard(
                         normalizedStatus in listOf("rejected", "ditolak") -> "✗ Ditolak"
                         else -> "Selesai"
                     }
-                    remainingSeconds > 0 -> String.format("%02d:%02d", minutes, seconds)
                     else -> "Sedang Diproses"
                 },
                 color = Color.White,
@@ -246,38 +210,6 @@ fun CountdownCard(
                 fontWeight = FontWeight.Black,
                 letterSpacing = 2.sp,
             )
-
-            if (!isFinalStatus) {
-                Spacer(modifier = Modifier.height(16.dp))
-
-                LinearProgressIndicator(
-                    progress = { progress.coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp)),
-                    color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.3f),
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        "Mulai",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                    Text(
-                        "10 Menit",
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
-            }
         }
     }
 }

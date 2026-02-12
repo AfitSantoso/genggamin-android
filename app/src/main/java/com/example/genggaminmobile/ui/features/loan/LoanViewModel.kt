@@ -55,8 +55,9 @@ data class LoanApplicationUiState(
     val tenorInput: String = "",
     val purposeInput: String = "",
     val simulation: LoanSimulation? = null,
-    val latitude: Double = -6.2866713, // Default hardcode
-    val longitude: Double = 106.7791363, // Default hardcode
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val locationFetched: Boolean = false, // Track if GPS location was actually fetched
     // Contract related states
     val showContractDialog: Boolean = false,
     val customerProfile: CustomerProfileResponse? = null,
@@ -126,9 +127,11 @@ class LoanViewModel @Inject constructor(
     }
 
     fun updateLocation(lat: Double, lon: Double) {
+        Log.d(TAG, "updateLocation: lat=$lat, lon=$lon")
         _uiState.value = _uiState.value.copy(
             latitude = lat,
             longitude = lon,
+            locationFetched = true,
         )
     }
 
@@ -246,6 +249,15 @@ class LoanViewModel @Inject constructor(
             return
         }
 
+        // Validate location data is available
+        if (!state.locationFetched || (state.latitude == 0.0 && state.longitude == 0.0)) {
+            Log.w(TAG, "Location not available: fetched=${state.locationFetched}, lat=${state.latitude}, lng=${state.longitude}")
+            _uiState.value = state.copy(error = context.getString(R.string.error_location_not_available))
+            return
+        }
+
+        Log.d(TAG, "onApplyLoanClicked: lat=${state.latitude}, lng=${state.longitude}, locationFetched=${state.locationFetched}")
+
         // All validations passed, show contract dialog
         _uiState.value = state.copy(error = null, showContractDialog = true)
     }
@@ -275,6 +287,9 @@ class LoanViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.value = state.copy(isContractLoading = true, error = null)
+
+            // Log location values for debugging
+            Log.d(TAG, "onContractSigned: locationFetched=${state.locationFetched}, lat=${state.latitude}, lng=${state.longitude}")
 
             try {
                 // 1. Convert signature path to Bitmap
@@ -368,41 +383,31 @@ class LoanViewModel @Inject constructor(
      */
     private suspend fun tryImmediateSync(contractId: Long) {
         try {
-            // Upload PDF
+            // Upload PDF (Best Effort)
             val uploadResult = contractRepository.uploadContractPdf(contractId)
+            val contractUrl = uploadResult.getOrNull()
 
             if (uploadResult.isSuccess) {
-                val contractUrl = uploadResult.getOrNull()
                 Log.d(TAG, "Upload successful: $contractUrl")
-
-                // Submit loan
-                val submitResult = contractRepository.submitContractLoan(contractId)
-
-                if (submitResult.isSuccess) {
-                    Log.d(TAG, "Loan submitted successfully")
-                    _uiState.value = _uiState.value.copy(
-                        isContractLoading = false,
-                        showContractDialog = false,
-                        success = true,
-                        contractUrl = contractUrl,
-                        isOfflineSubmission = false,
-                    )
-                } else {
-                    // Upload succeeded but submit failed - schedule retry
-                    Log.w(TAG, "Upload succeeded but submit failed, scheduling retry")
-                    scheduleBackgroundSync()
-
-                    _uiState.value = _uiState.value.copy(
-                        isContractLoading = false,
-                        showContractDialog = false,
-                        success = true,
-                        isOfflineSubmission = true,
-                        offlineMessage = context.getString(R.string.msg_submission_uploaded),
-                    )
-                }
             } else {
-                // Upload failed - schedule retry
-                Log.w(TAG, "Upload failed, scheduling retry")
+                Log.w(TAG, "Upload failed or skipped, proceeding to submission anyway")
+            }
+
+            // Submit loan regardless of upload result (Backend doesn't strictly require the file URL)
+            val submitResult = contractRepository.submitContractLoan(contractId)
+
+            if (submitResult.isSuccess) {
+                Log.d(TAG, "Loan submitted successfully")
+                _uiState.value = _uiState.value.copy(
+                    isContractLoading = false,
+                    showContractDialog = false,
+                    success = true,
+                    contractUrl = contractUrl,
+                    isOfflineSubmission = false,
+                )
+            } else {
+                // Submit failed - schedule retry
+                Log.w(TAG, "Submit failed, scheduling retry")
                 scheduleBackgroundSync()
 
                 _uiState.value = _uiState.value.copy(

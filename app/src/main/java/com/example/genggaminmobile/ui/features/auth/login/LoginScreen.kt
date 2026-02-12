@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -43,7 +45,8 @@ fun LoginScreen(
     val credentialManager = remember { CredentialManager.create(context) }
 
     // Web Client ID Terbaru (Web Application)
-    val webClientId = "196871791222-5opu1hhd733juuvokltoq6jr3lidppia.apps.googleusercontent.com"
+    // Updated to match the backend application.yml config
+    val webClientId = "926562784828-316arit97i791egpso2t8qk9muuqq4nf.apps.googleusercontent.com"
 
     LaunchedEffect(uiState.isLoginSuccess) {
         if (uiState.isLoginSuccess) {
@@ -96,15 +99,25 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            var passwordVisible by remember { mutableStateOf(false) }
+
             CustomTextField(
                 value = uiState.password,
                 onValueChange = viewModel::onPasswordChange,
                 label = "Kata Sandi",
                 modifier = Modifier.fillMaxWidth(),
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 isError = uiState.error?.contains("sandi", ignoreCase = true) == true,
                 errorMessage = if (uiState.error?.contains("sandi", ignoreCase = true) == true) uiState.error else null,
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) androidx.compose.material.icons.Icons.Default.Visibility else androidx.compose.material.icons.Icons.Default.VisibilityOff,
+                            contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi",
+                        )
+                    }
+                },
             )
 
             if (uiState.error != null && uiState.error?.contains("sandi", ignoreCase = true) == false && uiState.error?.contains("Pengguna", ignoreCase = true) == false) {

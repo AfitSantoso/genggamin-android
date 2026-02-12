@@ -79,7 +79,7 @@ class GenggaminFirebaseMessagingService : FirebaseMessagingService() {
 
         val notificationBuilder =
             NotificationCompat.Builder(this, channelId)
-                .setSmallIcon(R.drawable.ic_launcher_foreground) // GUNAKAN DRAWABLE, BUKAN MIPMAP
+                .setSmallIcon(R.drawable.ic_stat_genggamin) // GUNAKAN DRAWABLE, BUKAN MIPMAP
                 .setContentTitle(title)
                 .setContentText(messageBody)
                 .setAutoCancel(true)
