@@ -1,5 +1,7 @@
 package com.example.genggaminmobile.data.repository
 
+import android.util.Log
+
 import com.example.genggaminmobile.data.local.dao.LoanDao
 import com.example.genggaminmobile.data.local.dao.LoanLimitDao
 import com.example.genggaminmobile.data.local.entity.toDomain
@@ -134,7 +136,8 @@ constructor(
             }
 
             // 2. Try to sync immediately
-            val response = loanApi.submitLoan(LoanRequest(amount, tenor, purpose, plafondId, latitude, longitude))
+            Log.d("LoanRepo", "submitLoan: lat=$latitude, lng=$longitude, interestRate=$interestRate")
+            val response = loanApi.submitLoan(LoanRequest(amount, tenor, purpose, plafondId, interestRate, latitude, longitude))
             if (response.success) {
                 // 3. Update local record with remote ID and status
                 val updatedEntity =
@@ -242,6 +245,10 @@ constructor(
         var allSuccess = true
         unsynced.forEach { entity ->
             try {
+                val lat = entity.latitude ?: -6.2866713
+                val lng = entity.longitude ?: 106.7791363
+                val rate = entity.interestRate ?: 0.0
+                Log.d("LoanRepo", "syncUnsyncedLoans: lat=$lat, lng=$lng, interestRate=$rate")
                 val response =
                     loanApi.submitLoan(
                         LoanRequest(
@@ -249,8 +256,9 @@ constructor(
                             entity.tenorMonths,
                             entity.purpose ?: "",
                             entity.plafondId,
-                            entity.latitude ?: -6.2866713,
-                            entity.longitude ?: 106.7791363,
+                            rate,
+                            lat,
+                            lng,
                         ),
                     )
                 if (response.success) {

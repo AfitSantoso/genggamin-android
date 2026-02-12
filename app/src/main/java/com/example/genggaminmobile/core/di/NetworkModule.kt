@@ -34,7 +34,7 @@ object NetworkModule {
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.HEADERS // Changed from BODY to avoid binary log spam
+            level = HttpLoggingInterceptor.Level.BODY
         }
     }
 

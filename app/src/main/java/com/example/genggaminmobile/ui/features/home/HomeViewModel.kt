@@ -27,7 +27,7 @@ data class HomeUiState(
     val hasProfile: Boolean = false,
     val monthlyIncome: Long? = null,
     val showProfilePrompt: Boolean = false,
-    val showPromoPopup: Boolean = true,
+    val showPromoPopup: Boolean = false,
 )
 
 @HiltViewModel
@@ -46,9 +46,17 @@ constructor(
         checkLoginStatusAndLoadPlafonds()
     }
 
+    private var hasShownPromo = false
+
     fun checkLoginStatusAndLoadPlafonds() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
+
+            // Only show promo once per session
+            if (!hasShownPromo) {
+                _uiState.value = _uiState.value.copy(showPromoPopup = true)
+                hasShownPromo = true
+            }
 
             val token = authRepository.getAuthToken().first()
             val isLoggedIn = !token.isNullOrBlank()
@@ -64,7 +72,7 @@ constructor(
                 launch { loadLimits() }
                 launch { loadActiveLoans() }
             } else {
-                loadAllPlafonds()
+                launch { loadAllPlafonds() }
             }
         }
     }

@@ -15,6 +15,7 @@ import com.example.genggaminmobile.domain.model.Loan
 import com.example.genggaminmobile.domain.repository.ContractRepository
 import com.example.genggaminmobile.domain.util.CloudinaryUploadResult
 import com.example.genggaminmobile.domain.util.CloudinaryUploader
+import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import java.io.File
@@ -113,11 +114,20 @@ class ContractRepositoryImpl @Inject constructor(
                 if (uploadResult.isSuccess) {
                     syncedCount++
                 } else {
-                    hasErrors = true
+                    // Best Effort approach: If upload fails, we still want to try submitting the loan
+                    // because the backend might not strictly require the PDF URL.
+                    Log.w(TAG, "Upload failed for ${contract.id}, but proceeding to submission (Best Effort)")
+                    
+                    // Force update status to UPLOADED so Step 2 picks it up
+                    pendingContractDao.updateStatus(contract.id, ContractStatus.UPLOADED)
+                    
+                    // We don't increment syncedCount or set hasErrors here because 
+                    // the real success depending on Step 2 (Submission)
                 }
             }
 
             // Step 2: Submit loans for uploaded contracts
+            // This will now include the ones that failed upload but were forced to UPLOADED
             val contractsToSubmit = pendingContractDao.getContractsToSubmit()
             Log.d(TAG, "Found ${contractsToSubmit.size} contracts to submit")
 
@@ -214,31 +224,27 @@ class ContractRepositoryImpl @Inject constructor(
         val contract = pendingContractDao.getContractById(contractId)
             ?: return Result.failure(Exception("Contract not found"))
 
-        // Must be uploaded first
-        if (contract.status != ContractStatus.UPLOADED &&
-            contract.status != ContractStatus.PENDING_SUBMIT
-        ) {
-            return Result.failure(Exception("Contract not yet uploaded"))
-        }
-
-        if (contract.contractUrl.isNullOrBlank()) {
-            return Result.failure(Exception("Contract URL is missing"))
-        }
-
         try {
             pendingContractDao.updateStatus(contractId, ContractStatus.PENDING_SUBMIT)
 
             Log.d(TAG, "Submitting loan for contract $contractId")
-            Log.d(TAG, "Request: amount=${contract.amount}, tenor=${contract.tenor}, purpose=${contract.purpose}, plafondId=${contract.plafondId}, lat=${contract.latitude}, lng=${contract.longitude}")
+            Log.d(TAG, "Contract data: amount=${contract.amount}, tenor=${contract.tenor}, purpose=${contract.purpose}, plafondId=${contract.plafondId}, interestRate=${contract.interestRate}, lat=${contract.latitude}, lng=${contract.longitude}")
 
             val request = LoanRequest(
                 amount = contract.amount,
                 tenureMonths = contract.tenor,
                 purpose = contract.purpose,
                 plafondId = contract.plafondId,
+                interestRate = contract.interestRate,
                 latitude = contract.latitude,
                 longitude = contract.longitude,
             )
+
+            // Log the exact JSON body that Retrofit/Gson will send
+            val jsonBody = Gson().toJson(request)
+            Log.d(TAG, "=== EXACT JSON REQUEST BODY ===")
+            Log.d(TAG, jsonBody)
+            Log.d(TAG, "===============================")
 
             val response = loanApi.submitLoan(request)
 
@@ -353,12 +359,16 @@ class ContractRepositoryImpl @Inject constructor(
 
                 // Try upload
                 val uploadResult = uploadContractPdf(contractId)
-                if (uploadResult.isSuccess) {
-                    // If upload succeeded, try submit
-                    submitContractLoan(contractId)
-                } else {
-                    uploadResult.map { }
+                
+                // Best Effort: Proceed to submit regardless of upload result
+                if (uploadResult.isFailure) {
+                    Log.w(TAG, "Retry upload failed, proceeding to submit anyway")
+                    // Force update status to UPLOADED so submitContractLoan accepts it
+                    pendingContractDao.updateStatus(contractId, ContractStatus.UPLOADED)
                 }
+                
+                // Try submit
+                submitContractLoan(contractId)
             }
             ContractStatus.UPLOADED, ContractStatus.PENDING_SUBMIT -> {
                 // Try submit

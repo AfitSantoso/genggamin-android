@@ -31,6 +31,7 @@ data class LoanRequest(
     @SerializedName("tenureMonths") val tenureMonths: Int,
     @SerializedName("purpose") val purpose: String,
     @SerializedName("plafondId") val plafondId: Long,
+    @SerializedName("interestRate") val interestRate: Double,
     @SerializedName("latitude") val latitude: Double,
     @SerializedName("longitude") val longitude: Double,
 )

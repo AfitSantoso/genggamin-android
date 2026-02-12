@@ -110,6 +110,7 @@
     <string name="msg_submission_uploaded">Kontrak diunggah. Pengajuan akan otomatis diproses.</string>
     <string name="msg_submission_offline_stable">Pengajuan tersimpan. Akan otomatis terkirim saat koneksi stabil.</string>
     <string name="error_contract_process_failed">Gagal memproses kontrak: %1$s</string>
+    <string name="error_location_not_available">Lokasi belum terdeteksi. Pastikan GPS/lokasi aktif dan tunggu beberapa saat.</string>
 
     <!-- Notification -->
     <string name="notification_title">Notifikasi</string>
@@ -163,5 +164,13 @@
     <string name="contract_signature_first_party">PIHAK PERTAMA</string>
     <string name="contract_signature_second_party">PIHAK KEDUA</string>
     <string name="contract_signature_company">PT Genggamin Finance Indonesia</string>
+
+    <!-- Profile Screen -->
+    <string name="income_range_under_2m">Di bawah Rp 2.000.000</string>
+    <string name="income_range_2m_4m">Rp 2.000.000 - Rp 4.000.000</string>
+    <string name="income_range_4m_7m">Rp 4.000.000 - Rp 7.000.000</string>
+    <string name="income_range_7m_10m">Rp 7.000.000 - Rp 10.000.000</string>
+    <string name="income_range_10m_20m">Rp 10.000.000 - Rp 20.000.000</string>
+    <string name="income_range_above_20m">Di atas Rp 20.000.000</string>
 
 </resources>

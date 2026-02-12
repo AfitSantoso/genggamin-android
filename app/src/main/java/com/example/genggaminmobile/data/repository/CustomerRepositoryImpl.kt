@@ -109,6 +109,13 @@ class CustomerRepositoryImpl @Inject constructor(
         val contactsType = object : com.google.gson.reflect.TypeToken<List<com.example.genggaminmobile.data.model.dto.EmergencyContactDto>>() {}.type
         val contacts: List<com.example.genggaminmobile.data.model.dto.EmergencyContactDto> = gson.fromJson(entity.emergencyContactsJson, contactsType) ?: emptyList()
 
+        // Helper to format server path if not local
+        fun getUsablePath(localPath: String?, serverPath: String?): String? {
+            if (!localPath.isNullOrBlank()) return localPath
+            if (serverPath.isNullOrBlank()) return null
+            return if (serverPath.startsWith("http")) serverPath else "http://104.197.213.143$serverPath"
+        }
+
         return CustomerProfileResponse(
             id = entity.id,
             userId = entity.userId,
@@ -126,11 +133,11 @@ class CustomerRepositoryImpl @Inject constructor(
             motherMaidenName = entity.motherMaidenName,
             accountNumber = entity.accountNumber,
             accountHolderName = entity.accountHolderName,
-            ktpImagePath = entity.localKtpPath ?: entity.ktpImagePath,
-            selfieImagePath = entity.localSelfiePath ?: entity.selfieImagePath,
+            ktpImagePath = getUsablePath(entity.localKtpPath, entity.ktpImagePath),
+            selfieImagePath = getUsablePath(entity.localSelfiePath, entity.selfieImagePath),
             // For payslip: prioritize server state (payslipImagePath) - if null (deleted by backend), return null
             // Only use local cache if server indicates payslip exists
-            payslipImagePath = if (entity.payslipImagePath.isNullOrBlank()) null else (entity.localPayslipPath ?: entity.payslipImagePath),
+            payslipImagePath = if (entity.payslipImagePath.isNullOrBlank()) null else getUsablePath(entity.localPayslipPath, entity.payslipImagePath),
             emergencyContacts = contacts,
             createdAt = entity.createdAt,
         )
@@ -406,12 +413,13 @@ class CustomerRepositoryImpl @Inject constructor(
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val file = File(context.filesDir, filename)
-                // If it's a local path already, just return it
-                if (url.startsWith("/")) return@withContext url
-
+                
+                // If the file already exists locally and we strictly know it's the same file, we could return it.
+                // But generally, we treat 'url' as the source.
+                
                 if (!force && file.exists() && file.length() > 0) return@withContext file.absolutePath
 
-                val finalUrl = if (url.startsWith("http")) url else "http://10.0.2.2:8080$url" // Fallback IP for emulator
+                val finalUrl = if (url.startsWith("http")) url else "http://104.197.213.143$url"
 
                 val request = okhttp3.Request.Builder().url(finalUrl).build()
                 val client = okhttp3.OkHttpClient()
