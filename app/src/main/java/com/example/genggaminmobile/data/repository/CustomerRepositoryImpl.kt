@@ -413,10 +413,10 @@ class CustomerRepositoryImpl @Inject constructor(
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val file = File(context.filesDir, filename)
-                
+
                 // If the file already exists locally and we strictly know it's the same file, we could return it.
                 // But generally, we treat 'url' as the source.
-                
+
                 if (!force && file.exists() && file.length() > 0) return@withContext file.absolutePath
 
                 val finalUrl = if (url.startsWith("http")) url else "http://104.197.213.143$url"

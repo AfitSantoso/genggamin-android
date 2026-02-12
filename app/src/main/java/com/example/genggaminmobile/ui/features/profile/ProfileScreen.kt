@@ -31,7 +31,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.example.genggaminmobile.R
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +38,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.genggaminmobile.R
 import com.example.genggaminmobile.data.model.dto.CustomerProfileRequest
 import com.example.genggaminmobile.data.model.dto.EmergencyContactDto
 import java.io.File
@@ -237,7 +237,7 @@ fun ProfileScreen(
                                                 if (cleaned.length <= 15 && cleaned.all { char -> char.isDigit() }) {
                                                     phone = cleaned
                                                 }
-                                            }
+                                            },
                                         )
                                         2 -> FinancialDataStep(income, { income = formatCurrencyInput(it) }, occupation, { occupation = it }, currentAddress, { currentAddress = it }, motherName, { motherName = it })
                                         3 -> BankDataStep(bankAccount, { bankAccount = it }, bankHolder, { bankHolder = it })
@@ -247,13 +247,13 @@ fun ProfileScreen(
                                             relation = emergencyRelation,
                                             onRelationChange = { emergencyRelation = it },
                                             phone = emergencyPhone,
-                                            onPhoneChange = { input -> 
+                                            onPhoneChange = { input ->
                                                 // Strip leading 0 if present, as prefix is +62
                                                 val cleaned = if (input.startsWith("0")) input.substring(1) else input
                                                 if (cleaned.length <= 15 && cleaned.all { char -> char.isDigit() }) {
-                                                    emergencyPhone = cleaned 
+                                                    emergencyPhone = cleaned
                                                 }
-                                            }
+                                            },
                                         )
                                         5 -> DocumentUploadStep(
                                             ktp = ktpFile,
@@ -703,11 +703,16 @@ fun ModernSuccessDialog(onDismiss: () -> Unit) {
 
 @Composable
 fun PersonalDataStep(
-    nik: String, onNikChange: (String) -> Unit,
-    dob: String, onDobChange: (String) -> Unit,
-    pob: String, onPobChange: (String) -> Unit,
-    address: String, onAddressChange: (String) -> Unit,
-    phone: String, onPhoneChange: (String) -> Unit
+    nik: String,
+    onNikChange: (String) -> Unit,
+    dob: String,
+    onDobChange: (String) -> Unit,
+    pob: String,
+    onPobChange: (String) -> Unit,
+    address: String,
+    onAddressChange: (String) -> Unit,
+    phone: String,
+    onPhoneChange: (String) -> Unit,
 ) {
     val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
@@ -719,7 +724,7 @@ fun PersonalDataStep(
             icon = Icons.Outlined.Badge,
             keyboardType = KeyboardType.Number,
             imeAction = androidx.compose.ui.text.input.ImeAction.Next,
-            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }),
         )
 
         // Date of Birth with DatePicker
@@ -732,8 +737,12 @@ fun PersonalDataStep(
             if (dob.isNotEmpty()) {
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 sdf.parse(dob)?.time
-            } else null
-        } catch (e: Exception) { null }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
 
         ModernDatePickerField(
             value = dob,
@@ -748,7 +757,7 @@ fun PersonalDataStep(
                     return year <= calendar.get(java.util.Calendar.YEAR)
                 }
             },
-            initialDateMillis = initialDate ?: maxDate
+            initialDateMillis = initialDate ?: maxDate,
         )
 
         ModernTextField(
@@ -757,9 +766,9 @@ fun PersonalDataStep(
             label = "Tempat Lahir",
             icon = Icons.Outlined.Place,
             imeAction = androidx.compose.ui.text.input.ImeAction.Next,
-            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) })
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }),
         )
-        
+
         ModernTextField(
             value = address,
             onValueChange = onAddressChange,
@@ -778,7 +787,7 @@ fun PersonalDataStep(
             keyboardType = KeyboardType.Phone,
             prefix = "+62 ",
             imeAction = androidx.compose.ui.text.input.ImeAction.Done,
-            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focusManager.clearFocus() })
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { focusManager.clearFocus() }),
         )
     }
 }
@@ -796,7 +805,7 @@ fun ModernDatePickerField(
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(
         selectableDates = selectableDates,
-        initialSelectedDateMillis = initialDateMillis
+        initialSelectedDateMillis = initialDateMillis,
     )
     val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
@@ -869,14 +878,14 @@ fun BankDataStep(account: String, onAccountChange: (String) -> Unit, holder: Str
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         ModernTextField(
             value = account,
-            onValueChange = { 
+            onValueChange = {
                 if (it.length <= 18 && it.all { char -> char.isDigit() }) {
                     onAccountChange(it)
                 }
             },
             label = "Nomor Rekening",
             icon = Icons.Outlined.Numbers,
-            keyboardType = KeyboardType.Number
+            keyboardType = KeyboardType.Number,
         )
         ModernTextField(value = holder, onValueChange = onHolderChange, label = "Nama Pemilik Rekening", icon = Icons.Outlined.Person)
     }
@@ -893,7 +902,7 @@ fun EmergencyContactStep(name: String, onNameChange: (String) -> Unit, relation:
             label = "Nomor Telepon",
             icon = Icons.Outlined.Call,
             keyboardType = KeyboardType.Phone,
-            prefix = "+62 "
+            prefix = "+62 ",
         )
     }
 }
@@ -1475,7 +1484,7 @@ fun formatCurrencyInput(input: String): String {
 @Composable
 fun IncomeInput(
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     val incomeRanges = listOf(
         stringResource(R.string.income_range_under_2m) to 1000000L,
@@ -1483,7 +1492,7 @@ fun IncomeInput(
         stringResource(R.string.income_range_4m_7m) to 5000000L,
         stringResource(R.string.income_range_7m_10m) to 8000000L,
         stringResource(R.string.income_range_10m_20m) to 15000000L,
-        stringResource(R.string.income_range_above_20m) to 20000000L
+        stringResource(R.string.income_range_above_20m) to 20000000L,
     )
 
     var expanded by remember { mutableStateOf(false) }
@@ -1536,7 +1545,7 @@ fun IncomeInput(
                         expanded = false
                         val formatted = NumberFormat.getNumberInstance(Locale("id", "ID")).format(valAmount)
                         onValueChange(formatted)
-                    }
+                    },
                 )
             }
         }

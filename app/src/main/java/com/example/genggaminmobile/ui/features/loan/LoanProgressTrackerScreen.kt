@@ -20,17 +20,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.genggaminmobile.R
 import com.example.genggaminmobile.core.service.LoanTimerService
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.ui.res.painterResource
-import com.example.genggaminmobile.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,7 +100,6 @@ fun LoanProgressTrackerScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Countdown Timer Card removed as requested
-
 
             // Progress Pulse Animation
             ProgressPulseSection(

@@ -117,11 +117,11 @@ class ContractRepositoryImpl @Inject constructor(
                     // Best Effort approach: If upload fails, we still want to try submitting the loan
                     // because the backend might not strictly require the PDF URL.
                     Log.w(TAG, "Upload failed for ${contract.id}, but proceeding to submission (Best Effort)")
-                    
+
                     // Force update status to UPLOADED so Step 2 picks it up
                     pendingContractDao.updateStatus(contract.id, ContractStatus.UPLOADED)
-                    
-                    // We don't increment syncedCount or set hasErrors here because 
+
+                    // We don't increment syncedCount or set hasErrors here because
                     // the real success depending on Step 2 (Submission)
                 }
             }
@@ -359,14 +359,14 @@ class ContractRepositoryImpl @Inject constructor(
 
                 // Try upload
                 val uploadResult = uploadContractPdf(contractId)
-                
+
                 // Best Effort: Proceed to submit regardless of upload result
                 if (uploadResult.isFailure) {
                     Log.w(TAG, "Retry upload failed, proceeding to submit anyway")
                     // Force update status to UPLOADED so submitContractLoan accepts it
                     pendingContractDao.updateStatus(contractId, ContractStatus.UPLOADED)
                 }
-                
+
                 // Try submit
                 submitContractLoan(contractId)
             }

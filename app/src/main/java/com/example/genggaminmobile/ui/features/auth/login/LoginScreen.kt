@@ -117,7 +117,7 @@ fun LoginScreen(
                             contentDescription = if (passwordVisible) "Sembunyikan kata sandi" else "Tampilkan kata sandi",
                         )
                     }
-                }
+                },
             )
 
             if (uiState.error != null && uiState.error?.contains("sandi", ignoreCase = true) == false && uiState.error?.contains("Pengguna", ignoreCase = true) == false) {

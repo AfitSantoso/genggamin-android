@@ -88,7 +88,7 @@ constructor(
                 },
                 onFailure = { error ->
                     handleError(error)
-                }
+                },
             )
         }
     }
@@ -98,7 +98,7 @@ constructor(
         authRepository.login(
             username = currentState.username,
             password = currentState.password,
-            fcmToken = null // Or fetch FCM token if needed, passing null for now as often it's optional or handled inside repo
+            fcmToken = null, // Or fetch FCM token if needed, passing null for now as often it's optional or handled inside repo
         ).fold(
             onSuccess = {
                 // 3. Login success, now we are fully signed in.
@@ -112,10 +112,10 @@ constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = "Registrasi berhasil, namun gagal login otomatis: ${error.message}"
+                        error = "Registrasi berhasil, namun gagal login otomatis: ${error.message}",
                     )
                 }
-            }
+            },
         )
     }
 

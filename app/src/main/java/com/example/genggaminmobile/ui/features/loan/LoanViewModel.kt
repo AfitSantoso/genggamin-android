@@ -386,7 +386,7 @@ class LoanViewModel @Inject constructor(
             // Upload PDF (Best Effort)
             val uploadResult = contractRepository.uploadContractPdf(contractId)
             val contractUrl = uploadResult.getOrNull()
-            
+
             if (uploadResult.isSuccess) {
                 Log.d(TAG, "Upload successful: $contractUrl")
             } else {
