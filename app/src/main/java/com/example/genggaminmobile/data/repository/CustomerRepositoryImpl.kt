@@ -113,7 +113,7 @@ class CustomerRepositoryImpl @Inject constructor(
         fun getUsablePath(localPath: String?, serverPath: String?): String? {
             if (!localPath.isNullOrBlank()) return localPath
             if (serverPath.isNullOrBlank()) return null
-            return if (serverPath.startsWith("http")) serverPath else "http://104.197.213.143$serverPath"
+            return if (serverPath.startsWith("http")) serverPath else "http://34.44.110.40$serverPath"
         }
 
         return CustomerProfileResponse(
@@ -419,7 +419,7 @@ class CustomerRepositoryImpl @Inject constructor(
 
                 if (!force && file.exists() && file.length() > 0) return@withContext file.absolutePath
 
-                val finalUrl = if (url.startsWith("http")) url else "http://104.197.213.143$url"
+                val finalUrl = if (url.startsWith("http")) url else "http://34.44.110.40$url"
 
                 val request = okhttp3.Request.Builder().url(finalUrl).build()
                 val client = okhttp3.OkHttpClient()

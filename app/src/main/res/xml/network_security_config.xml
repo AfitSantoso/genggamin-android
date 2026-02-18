@@ -11,6 +11,6 @@
         <domain includeSubdomains="true">10.10.90.107</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
         <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">104.197.213.143</domain>
+        <domain includeSubdomains="true">34.44.110.40</domain>
     </domain-config>
 </network-security-config>
